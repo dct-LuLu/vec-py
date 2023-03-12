@@ -16,6 +16,7 @@ label = pyglet.text.Label("", color=(122, 122, 122, 255),
                           x=400, y=300,
                           anchor_x='center', anchor_y='center')
 
+
 class PhysicsObject:
     def __init__(self, obj: shapes):
         self.obj = obj
