@@ -9,6 +9,7 @@ game_window = pyglet.window.Window(800, 600)
 
 main_batch = pyglet.graphics.Batch()
 
+pyglet.window.FPSDisplay.update_period = 0.01
 counter = pyglet.window.FPSDisplay(window=game_window)
 
 label = pyglet.text.Label("", color=(122, 122, 122, 255),
