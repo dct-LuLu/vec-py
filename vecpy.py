@@ -1,7 +1,8 @@
+import math
+
 import pyglet
 import pyglet.shapes as shapes
 from pyglet.window import mouse
-import math
 
 # Création de la fenêtre
 game_window = pyglet.window.Window(800, 600)
@@ -14,7 +15,6 @@ label = pyglet.text.Label("", color=(122, 122, 122, 255),
                           font_size=36,
                           x=400, y=300,
                           anchor_x='center', anchor_y='center')
-
 
 class PhysicsObject:
     def __init__(self, obj: shapes):
