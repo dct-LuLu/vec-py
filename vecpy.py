@@ -34,12 +34,22 @@ class Rect(PhysicalObject, shapes.Rectangle):
         shapes.Rectangle.__init__(self, *args, **kwargs)
         PhysicalObject.__init__(self)
 
+    def bounds(self, cx, cy) -> bool:
+        if (self.x <= cx <= self.x + self.width) and (self.y <= cy <= self.y + self.height):
+            return True
+        return False
+
 class Circ(PhysicalObject, shapes.Circle):
     def __init__(self, *args, **kwargs):
         shapes.Circle.__init__(self, *args, **kwargs)
         PhysicalObject.__init__(self)
 
-f = Rect(x=100, y=150, width=100, height=200, color=(93,23,222,89))
+    def bounds(self, cx, cy) -> bool:
+        if circle.radius > math.sqrt((cx-circle.x)**2+(cy-circle.y)**2):
+            return True
+        return False
+
+f = Rect(x=0, y=0, width=800, height=20, color=(93,23,222,89))
 
 circle = Circ(x=100, y=150, radius=100, color=(50, 225, 30))
 
@@ -60,7 +70,7 @@ def reset_plane():
 def on_mouse_drag(x, y, dx, dy, buttons, modifiers):
     global inn
     if buttons & mouse.LEFT:
-        if circle.radius > math.sqrt((x-circle.x)**2+(y-circle.y)**2) or inn:
+        if circle.bounds(x, y) or inn:
             circle.x += dx
             circle.y += dy
             circle.speed_gravity = 0
@@ -97,10 +107,10 @@ def update(dt):
         circle.x += circle.speed_x * dt * 100
 
     midcircle.x, midcircle.y = circle.x, circle.y
-    label.text = f"x: {int(circle.x)} y:{int(circle.y)}\ndx:{int(circle.speed_x)} dy:{int(circle.speed_y)}"
+    label.text = f"x: {int(circle.x)} y:{int(circle.y)} dx:{int(circle.speed_x)} dy:{int(circle.speed_y)}"
 
 
 if __name__ == "__main__":
     init()
-    pyglet.clock.schedule_interval(update, 1 / 360.0)
+    pyglet.clock.schedule_interval(update, 1 / 120.0)
     pyglet.app.run()
