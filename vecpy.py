@@ -57,16 +57,6 @@ def reset_plane():
 
 
 @game_window.event
-def on_mouse_motion(x, y, dx, dy):
-    label.text = f'x:{x} y:{y}'
-
-    if circle.radius > math.sqrt((x-circle.x)**2+(y-circle.y)**2):
-        label.color = (255, 0, 255, 255)
-    else:
-        label.color = (122, 122, 122, 255)
-
-
-@game_window.event
 def on_mouse_drag(x, y, dx, dy, buttons, modifiers):
     global inn
     if buttons & mouse.LEFT:
@@ -93,21 +83,24 @@ def on_draw():
     main_batch.draw()
     counter.draw()
     label.draw()
-    if not inn:
-        circle.speed_gravity += circle.gravity
-        circle.x += circle.speed_x
-        circle.y -= circle.speed_y + circle.speed_gravity
-
     circle.draw()
-    midcircle.x, midcircle.y = circle.x, circle.y
     midcircle.draw()
+    f.draw()
 
 
 def update(dt):
-    pass
+    if not inn:
+        circle.speed_gravity += circle.gravity * dt * 100
+        circle.speed_y -= (circle.speed_y + circle.speed_gravity) * dt * 100
+        circle.y += circle.speed_y
+        circle.speed_x *= 0.999
+        circle.x += circle.speed_x * dt * 100
+
+    midcircle.x, midcircle.y = circle.x, circle.y
+    label.text = f"x: {int(circle.x)} y:{int(circle.y)}\ndx:{int(circle.speed_x)} dy:{int(circle.speed_y)}"
 
 
 if __name__ == "__main__":
     init()
-    pyglet.clock.schedule_interval(update, 1 / 120.0)
+    pyglet.clock.schedule_interval(update, 1 / 360.0)
     pyglet.app.run()
