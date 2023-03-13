@@ -17,18 +17,33 @@ label = pyglet.text.Label("", color=(122, 122, 122, 255),
                           anchor_x='center', anchor_y='center')
 
 
-class PhysicalObject(pyglet.shapes.Circle):
-    def __init__(self, *args, **kwargs):
-        super(PhysicalObject, self).__init__(*args, **kwargs)
+class PhysicalObject():
+    def __init__(self):
         self.speed_x = 0
         self.speed_y = 0
         self.gravity = 0.05
         self.speed_gravity = 0
 
+    def contact(self):
+        self.speed_x = 0
+        self.speed_y = 0
+        self.speed_gravity = 0
 
-circle = PhysicalObject(x=100, y=150, radius=100, color=(50, 225, 30))
+class Rect(PhysicalObject, shapes.Rectangle):
+    def __init__(self, *args, **kwargs):
+        shapes.Rectangle.__init__(self, *args, **kwargs)
+        PhysicalObject.__init__(self)
 
-midcircle = shapes.Circle(x=100, y=150, radius=2, color=(245, 40, 145, 120))
+class Circ(PhysicalObject, shapes.Circle):
+    def __init__(self, *args, **kwargs):
+        shapes.Circle.__init__(self, *args, **kwargs)
+        PhysicalObject.__init__(self)
+
+f = Rect(x=100, y=150, width=100, height=200, color=(93,23,222,89))
+
+circle = Circ(x=100, y=150, radius=100, color=(50, 225, 30))
+
+midcircle = Circ(x=100, y=150, radius=2, color=(245, 40, 145, 120))
 
 inn = False
 
@@ -60,7 +75,7 @@ def on_mouse_drag(x, y, dx, dy, buttons, modifiers):
             circle.y += dy
             circle.speed_gravity = 0
             circle.speed_x = dx
-            circle.speed_y = dy
+            circle.speed_y = -dy
             inn = True
 
 
