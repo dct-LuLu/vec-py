@@ -6,11 +6,13 @@ from pyglet.window import mouse
 
 
 class PhysicalObject():
-    def __init__(self, speed_x=0, speed_y=0, gravity=0.05, speed_gravity=0):
+    def __init__(self, movable, draggable, speed_x=0, speed_y=0, gravity=0.5, speed_gravity=0):
         self.speed_x = speed_x
         self.speed_y = speed_y
         self.gravity = gravity
         self.speed_gravity = speed_gravity
+        self.movable = movable
+        self.draggable = draggable
 
     def contact(self):
         self.speed_x = 0
@@ -22,9 +24,9 @@ class PhysicalObject():
 
 
 class Rect(PhysicalObject, shapes.Rectangle):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, draggable=True, movable=True, *args, **kwargs):
         shapes.Rectangle.__init__(self, *args, **kwargs)
-        PhysicalObject.__init__(self)
+        PhysicalObject.__init__(self, draggable, movable)
 
     def bounds(self, cx, cy) -> bool:
         if (self.x <= cx <= self.x + self.width) and (self.y <= cy <= self.y + self.height):
@@ -33,42 +35,51 @@ class Rect(PhysicalObject, shapes.Rectangle):
 
 
 class Circ(PhysicalObject, shapes.Circle):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, draggable=True, movable=True, *args, **kwargs):
         shapes.Circle.__init__(self, *args, **kwargs)
-        PhysicalObject.__init__(self)
+        PhysicalObject.__init__(self, draggable, movable)
 
     def bounds(self, cx, cy) -> bool:
-        if self.radius > math.sqrt((cx-self.x)**2+(cy-self.y)**2):
+        if self.radius >= math.sqrt((cx-self.x)**2+(cy-self.y)**2):
             return True
         return False
 
 class Events:
-    #@self.vecpy.event
+    def __init__(self):
+        self.drag_object = None
+
+    # EVENT
     def on_mouse_drag(self, x, y, dx, dy, buttons, modifiers):
         if buttons & mouse.LEFT:
-            if self.circle.bounds(x, y) or self.drag_status:
-                self.circle.x += dx
-                self.circle.y += dy
-                self.circle.speed_gravity = 0
-                self.circle.speed_x = dx
-                self.circle.speed_y = -dy
-                self.drag_status = True
+            if self.drag_object is not None: # On peut potentiellement aussi calculer la distance entre le curseur et le point central de l'objet et le modifier en gardant cette distance
+                self.drag_object.x += dx
+                self.drag_object.y += dy
+                self.drag_object.speed_x = dx
+                self.drag_object.speed_y = dy
 
+    # EVENT
+    def on_mouse_press(self, x, y, button, modifiers):
+        if button == mouse.LEFT:
+            for _ in self.shapes:
+                if _.bounds(x, y) and _.draggable and self.drag_object is None:
+                    self.drag_object = _
+                    self.drag_object.speed_gravity = 0
+                    self.drag_object.speed_x = 0
+                    self.drag_object.speed_y = 0
 
-    #@self.vecpy.event
+    # EVENT
     def on_mouse_release(self, x, y, button, modifiers):
         if button & mouse.LEFT:
-            if self.drag_status:
-                self.drag_status = False
+            print(f"speed_x: {self.drag_object.speed_x}, speed_y: {self.drag_object.speed_y}")
+            self.drag_object = None
 
 
 class Sim:
     def __init__(self):
-        self.shapes = []
-        self.drag_status = False
         self.init_render_objects()
-
-        self.quadtree = QuadTree(0, 0, self.width, self.height)
+        #Faire un truc qui choppe auto les draggable et movables
+        self.shapes = [self.circle, self.midcircle, self.ground] # TODO: ne pas utiliser de liste et aller chercher directement dans les instances de PhysicalObject
+        self.quadtree = QuadTree(0, 0, self.width, self.height) # TODO: setup la quadtree map
 
         
 
@@ -77,15 +88,15 @@ class Sim:
         self.counter = pyglet.window.FPSDisplay(window=self)
         self.label = pyglet.text.Label("", color=(122, 122, 122, 255),
                           font_size=36,
-                          x=400, y=300,
+                          x=self.width//2, y=self.height//2,
                           anchor_x='center', anchor_y='center')
-        self.ground = Rect(x=0, y=0, width=800, height=20, color=(93,23,222,89))
-        self.circle = Circ(x=100, y=150, radius=100, color=(50, 225, 30))
-        self.midcircle = Circ(x=100, y=150, radius=2, color=(245, 40, 145, 120))
+        self.circle = Circ(x=self.width//2, y=850, radius=100, color=(50, 225, 30))
+        self.midcircle = Circ(x=self.circle.x, y=self.circle.y, radius=2, color=(245, 40, 145, 120), draggable=False)
+        self.ground = Rect(x=0, y=0, width=self.width, height=int(1/30*self.height), color=(93,23,222,89), movable=False, draggable=False)
 
         self.torender = [self.main_batch, self.counter, self.label, self.ground, self.circle, self.midcircle]
 
-    #@self.event
+    # EVENT
     def on_draw(self):
         self.clear()
         for _ in self.torender:
@@ -93,29 +104,33 @@ class Sim:
 
 
     def update(self, dt):
-        if not self.drag_status:
-            self.circle.speed_gravity += self.circle.gravity * dt * 100
-            self.circle.speed_y -= (self.circle.speed_y + self.circle.speed_gravity) * dt * 100
-            self.circle.y += self.circle.speed_y
-            self.circle.speed_x *= 0.999
-            self.circle.x += self.circle.speed_x * dt * 100
+        for _ in self.shapes:
+            if _.movable and _ != self.drag_object:
+                _.speed_gravity += _.gravity * dt
+                _.speed_y -= _.speed_gravity * dt
+                _.y += _.speed_y * dt * 100
+
+                _.speed_x *= 0.999
+                _.x += _.speed_x * dt * 100
+
+
 
         self.midcircle.x, self.midcircle.y = self.circle.x, self.circle.y
+        
         self.label.text = f"x: {int(self.circle.x)} y:{int(self.circle.y)} dx:{int(self.circle.speed_x)} dy:{int(self.circle.speed_y)}"
 
     
 class Wind(Sim, Events, pyglet.window.Window):
     def __init__(self, *args, **kwargs):    
         # Création de la fenêtre
-        pyglet.window.Window.__init__(self, *args, **kwargs)
+        pyglet.window.Window.__init__(self, *args, **kwargs) # la fenêtre c'est self ... lol.
+        self.mousebuttons = mouse.MouseStateHandler()
+        self.push_handlers(self.mousebuttons)
         Sim.__init__(self)
         Events.__init__(self)
 
         pyglet.clock.schedule_interval(self.update, 1 / 120.0)
         pyglet.app.run()
-        
-    # Initiallizer SIM puis les EVENTS POUR CALL LES DECORATORS EVENTS AVEC SELF
-
 
 
 
@@ -181,4 +196,4 @@ class QuadTree:
 
 
 if __name__ == "__main__":
-    fsim = Wind(width=800, height=600)
+    fsim = Wind(width=1920, height=1080) # 800 , 600
