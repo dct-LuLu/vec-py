@@ -43,56 +43,38 @@ class Circ(PhysicalObject, shapes.Circle):
         return False
 
 class Events:
-    @self.vecpy.event
-    def on_mouse_drag(x, y, dx, dy, buttons, modifiers):
-        global inn
+    #@self.vecpy.event
+    def on_mouse_drag(self, x, y, dx, dy, buttons, modifiers):
         if buttons & mouse.LEFT:
-            if self.circle.bounds(x, y) or inn:
-                circle.x += dx
-                circle.y += dy
-                circle.speed_gravity = 0
-                circle.speed_x = dx
-                circle.speed_y = -dy
-                inn = True
+            if self.circle.bounds(x, y) or self.drag_status:
+                self.circle.x += dx
+                self.circle.y += dy
+                self.circle.speed_gravity = 0
+                self.circle.speed_x = dx
+                self.circle.speed_y = -dy
+                self.drag_status = True
 
 
-    @self.vecpy.event
-    def on_mouse_release(x, y, button, modifiers):
-        global inn
+    #@self.vecpy.event
+    def on_mouse_release(self, x, y, button, modifiers):
         if button & mouse.LEFT:
-            if inn:
-                inn = False
-
-
-    
-class Feur(Sim, Events):
-    def __init__(self, width, height):    
-        self.width = width
-        self.height = height
-        # Création de la fenêtre
-        self.vecpy = pyglet.window.Window(width, height)
-        
-    # Initiallizer SIM puis les EVENTS POUR CALL LES DECORATORS EVENTS AVEC SELF
-
+            if self.drag_status:
+                self.drag_status = False
 
 
 class Sim:
-    def __init__(self, width, height):
-
-        
-        super().__init__(Events)
+    def __init__(self):
         self.shapes = []
         self.drag_status = False
         self.init_render_objects()
 
         self.quadtree = QuadTree(0, 0, self.width, self.height)
 
-        pyglet.clock.schedule_interval(self.update, 1 / 120.0)
-        pyglet.app.run()
+        
 
     def init_render_objects(self):
         self.main_batch = pyglet.graphics.Batch()
-        self.counter = pyglet.window.FPSDisplay(window=self.vecpy)
+        self.counter = pyglet.window.FPSDisplay(window=self)
         self.label = pyglet.text.Label("", color=(122, 122, 122, 255),
                           font_size=36,
                           x=400, y=300,
@@ -103,26 +85,40 @@ class Sim:
 
         self.torender = [self.main_batch, self.counter, self.label, self.ground, self.circle, self.midcircle]
 
-    @vecpy.event
-    def on_draw():
-        vecpy.clear()
-        main_batch.draw()
-        counter.draw()
-        label.draw()
-        circle.draw()
-        midcircle.draw()
-        f.draw()
+    #@self.event
+    def on_draw(self):
+        self.clear()
+        for _ in self.torender:
+            _.draw()
 
-    def update(dt):
-        if not inn:
-            circle.speed_gravity += circle.gravity * dt * 100
-            circle.speed_y -= (circle.speed_y + circle.speed_gravity) * dt * 100
-            circle.y += circle.speed_y
-            circle.speed_x *= 0.999
-            circle.x += circle.speed_x * dt * 100
 
-        midcircle.x, midcircle.y = circle.x, circle.y
-        label.text = f"x: {int(circle.x)} y:{int(circle.y)} dx:{int(circle.speed_x)} dy:{int(circle.speed_y)}"
+    def update(self, dt):
+        if not self.drag_status:
+            self.circle.speed_gravity += self.circle.gravity * dt * 100
+            self.circle.speed_y -= (self.circle.speed_y + self.circle.speed_gravity) * dt * 100
+            self.circle.y += self.circle.speed_y
+            self.circle.speed_x *= 0.999
+            self.circle.x += self.circle.speed_x * dt * 100
+
+        self.midcircle.x, self.midcircle.y = self.circle.x, self.circle.y
+        self.label.text = f"x: {int(self.circle.x)} y:{int(self.circle.y)} dx:{int(self.circle.speed_x)} dy:{int(self.circle.speed_y)}"
+
+    
+class Wind(Sim, Events, pyglet.window.Window):
+    def __init__(self, *args, **kwargs):    
+        # Création de la fenêtre
+        pyglet.window.Window.__init__(self, *args, **kwargs)
+        Sim.__init__(self)
+        Events.__init__(self)
+
+        pyglet.clock.schedule_interval(self.update, 1 / 120.0)
+        pyglet.app.run()
+        
+    # Initiallizer SIM puis les EVENTS POUR CALL LES DECORATORS EVENTS AVEC SELF
+
+
+
+
 
 class QuadTree:
     def __init__(self, x, y, width, height, capacity=4, level=0):
@@ -185,4 +181,4 @@ class QuadTree:
 
 
 if __name__ == "__main__":
-    fsim = Sim()
+    fsim = Wind(width=800, height=600)
