@@ -119,10 +119,10 @@ class Sim:
             if shape.movable and shape != self.drag_object:
                 shape.speed_gravity += shape.gravity * dt
                 shape.speed_y -= shape.speed_gravity * dt
-                shape.y += shape.speed_y * dt *100
+                shape.y += shape.speed_y * dt /100
 
                 shape.speed_x *= 0.999
-                shape.x += shape.speed_x * dt *100
+                shape.x += shape.speed_x * dt /100
 
                 if ((shape.y + shape.radius) < 0) or \
                     ((shape.x - shape.radius) > self.width) or \
@@ -156,8 +156,9 @@ class Wind(Sim, Events, pyglet.window.Window):
 
 
 class QuadTree:
-    __MAX_OBJECTS = 4
+    __MAX_OBJECTS = 2
     __MAX_LEVELS = 10
+    
     def __init__(self, x, y, width, height, shapes=[], level=0):
         self.x = x
         self.y = y
@@ -166,104 +167,53 @@ class QuadTree:
         self.level = level
         self.shapes = shapes
         self.children = [None] * 4
-
+    
     def check(self):
-        sub_QuadTree = [[]] * 4
+        sub_QuadTree = [[] for _ in range(4)] # Use list comprehension to initialize sub_QuadTree
         half_width, half_height = self.width/2, self.height/2
-        x1 = self.x
-        y1 = self.y
-        x2 = self.x + half_width
-        y2 = self.y + half_height
-        x3 = self.x + self.width
-        y3 = self.y + self.height
+        x1, y1 = self.x, self.y
+        x2, y2 = self.x + half_width, self.y + half_height
+        x3, y3 = self.x + self.width, self.y + self.height
 
-        if len(self.shapes) >= self.__MAX_OBJECTS:
-            for shape in self.shapes:
-                if (x1 <= shape.x <= x2) and (y1 <= shape.y <= y2):
-                    sub_QuadTree[0].append(shape)
-                elif (x2 <= shape.x <= x3) and (y1 <= shape.y <= y2):
-                    sub_QuadTree[1].append(shape)
-                elif (x1 <= shape.x <= x2) and (y2 <= shape.y <= y3):
-                    sub_QuadTree[2].append(shape)
-                elif (x2 <= shape.x <= x3) and (y2 <= shape.y <= y3):
-                    sub_QuadTree[3].append(shape)
+        # Iterate through shapes only once
+        for shape in self.shapes:
+            if (x1 <= shape.x <= x2) and (y1 <= shape.y <= y2):
+                sub_QuadTree[0].append(shape)
+            elif (x2 <= shape.x <= x3) and (y1 <= shape.y <= y2):
+                sub_QuadTree[1].append(shape)
+            elif (x1 <= shape.x <= x2) and (y2 <= shape.y <= y3):
+                sub_QuadTree[2].append(shape)
+            elif (x2 <= shape.x <= x3) and (y2 <= shape.y <= y3):
+                sub_QuadTree[3].append(shape)
 
-            self.children = [QuadTree(x1, y1, half_width, half_height, sub_QuadTree[0], self.level+1),
-                            QuadTree(x2, y1, half_width, half_height, sub_QuadTree[1], self.level+1),
-                            QuadTree(x1, y2, half_width, half_height, sub_QuadTree[2], self.level+1),
-                            QuadTree(x2, y2, half_width, half_height, sub_QuadTree[3], self.level+1)]
-
-
-            for i, child in enumerate(self.children):
-                if child is not None:
-                    if len(child.shapes) >= self.__MAX_OBJECTS:
-                        self.children[i].check()
-                    else:
-                        self.children[i] = None
+        # Recursively create children only for non-empty sub-Quadtrees
+        for i, sub_shapes in enumerate(sub_QuadTree):
+            if len(sub_shapes) > self.__MAX_OBJECTS and self.level < self.__MAX_LEVELS:
+                self.children[i] = QuadTree(*self.get_sub_quadtree_coords(i), sub_shapes, self.level+1)
+                self.children[i].check()
+            else:
+                self.children[i] = None
 
     def render_quadtree(self):
         sub = []
-        for _ in self.children:
-            if _ is not None:
-                sub.append(Rect(x=_.x, y=_.y, width=_.width, height=_.height, color=(5*self.level,222,102, 10*self.level)))
-                sub += _.render_quadtree()
-        return sub
-
-
-    def clear(self):
-        self.shapes = []
-
-
-    def subdivide(self):
-        x1 = self.x
-        y1 = self.y
-        x2 = self.x + self.width/2
-        y2 = self.y + self.height/2
-        x3 = self.x + self.width/2
-        y3 = self.y
-        x4 = self.x
-        y4 = self.y + self.height/2
-        self.children = [QuadTree(x1, y1, self.width/2, self.height/2, self.capacity, self.level+1),
-                         QuadTree(x2, y2, self.width/2, self.height/2, self.capacity, self.level+1),
-                         QuadTree(x3, y3, self.width/2, self.height/2, self.capacity, self.level+1),
-                         QuadTree(x4, y4, self.width/2, self.height/2, self.capacity, self.level+1)]
-
-    def insert(self, shape: PhysicalObject):
-        if not self.contains(shape):
-            return False
-
-        if len(self.shapes) < self.capacity:
-            self.shapes.append(shape)
-            return True
-
-        if self.children is None:
-            self.subdivide()
-
         for child in self.children:
-            if child.insert(shape):
-                return True
-            
-        return False
-
-    def contains(self, shape: PhysicalObject):
-        return shape.x >= self.x and shape.x + shape.width <= self.x + self.width \
-               and shape.y >= self.y and shape.y + shape.height <= self.y + self.height
-
-    def query(self, shape: PhysicalObject):
-        results = []
-        if not self.contains(shape):
-            return results
-
-        for s in self.shapes:
-            if s is not shape:
-                results.append(s)
-
-        if self.children is not None:
-            for child in self.children:
-                results.extend(child.query(shape))
-        return results
-
-
+            if child is not None:
+                sub.append(Rect(x=child.x, y=child.y, width=child.width, height=child.height, color=(5*self.level,222,102, 10*self.level)))
+                sub += child.render_quadtree()
+        return sub
+    
+    def get_sub_quadtree_coords(self, index):
+        half_width, half_height = self.width/2, self.height/2
+        x1, y1 = self.x, self.y
+        x2, y2 = self.x + half_width, self.y + half_height
+        if index == 0:
+            return x1, y1, half_width, half_height
+        elif index == 1:
+            return x2, y1, half_width, half_height
+        elif index == 2:
+            return x1, y2, half_width, half_height
+        elif index == 3:
+            return x2, y2, half_width, half_height
 
 if __name__ == "__main__":
     fsim = Wind(width=1920, height=1080) # 800 , 600
