@@ -24,7 +24,7 @@ class PhysicalObject():
         pass
 
     def get_tag(self) -> str:
-        return f"{self.__class__.__name__} x: {self.x} y:{self.y} col:{self.color}"
+        return f"{self.__class__.__name__} x: {int(self.x)} y:{int(self.y)} col:{self.color[0], self.color[1], self.color[2]}"
 
 
 class Rect(PhysicalObject, shapes.Rectangle):
@@ -75,7 +75,7 @@ class Events:
     def on_mouse_release(self, x, y, button, modifiers):
         if button & mouse.LEFT:
             if self.drag_object is not None:
-                print(f"speed_x: {self.drag_object.speed_x}, speed_y: {self.drag_object.speed_y}")
+                #print(f"speed_x: {self.drag_object.speed_x}, speed_y: {self.drag_object.speed_y}")
                 self.drag_object = None
 
 
@@ -84,9 +84,9 @@ class Sim:
         self.init_render_objects()
         #Faire un truc qui choppe auto les draggable et movables
         self.shapes = [self.circle, self.midcircle, self.ground] + self.radoms # TODO: ne pas utiliser de liste et aller chercher directement dans les instances de PhysicalObject
-        self.quadtree = QuadTree(0, 0, self.width, self.height) # TODO: setup la quadtree map
-
-        
+        self.quadtree = QuadTree(0, 0, self.width, self.height, self.shapes) # TODO: setup la quadtree map
+        self.quadtree.check()
+        self.not_shapes = self.quadtree.render_quadtree()
 
     def init_render_objects(self):
         self.main_batch = pyglet.graphics.Batch()
@@ -100,17 +100,20 @@ class Sim:
         self.ground = Rect(x=0, y=0, width=self.width, height=int(1/30*self.height), color=(93,23,222,89), movable=False, draggable=False)
         self.radoms = [Circ(x=randint(100, self.width-100),
                        y=randint(100, self.height-100),
-                       radius=randint(2, 150),
+                       radius=randint(2, 3),
                        color=(randint(0,255), randint(0,255), randint(0,255), 255),
                        speed_x=randint(-5, 5),
                        speed_y=randint(-5, 5))
-                    for _ in range(randint(0, 50))]
-        self.torender = [self.main_batch, self.counter, self.label, self.ground, self.circle, self.midcircle] + self.radoms
+                    for _ in range(randint(0, 200))]
+        self.torender = [self.main_batch, self.counter, self.label, self.ground, self.midcircle, self.circle] + self.radoms
 
     # EVENT
     def on_draw(self):
         self.clear()
         for _ in self.torender:
+            _.draw()
+
+        for _ in self.not_shapes:
             _.draw()
 
 
@@ -119,18 +122,17 @@ class Sim:
             if shape.movable and shape != self.drag_object:
                 shape.speed_gravity += shape.gravity * dt
                 shape.speed_y -= shape.speed_gravity * dt
-                shape.y += shape.speed_y * dt * 100
+                shape.y += shape.speed_y * dt/1000
 
                 shape.speed_x *= 0.999
-                shape.x += shape.speed_x * dt * 100
+                shape.x += shape.speed_x * dt/1000
 
                 if ((shape.y + shape.radius) < 0) or \
                     ((shape.x - shape.radius) > self.width) or \
                     ((shape.x + shape.radius)) < 0:
                     self.shapes.pop(i)
-                    print("aaaaaaaaaaaaaaaaaaaaaaaa")
-                    if len(self.shapes) == 2:
-                        print(self.shapes[0].get_tag())
+                    self.torender.pop(self.torender.index(shape))
+                    #print(f"{shape.get_tag()} died, his famous last words were:\n{shape.radius * 'a'}\n")
 
 
 
@@ -157,15 +159,63 @@ class Wind(Sim, Events, pyglet.window.Window):
 
 
 class QuadTree:
-    def __init__(self, x, y, width, height, capacity=4, level=0):
+    __MAX_OBJECTS = 4
+    __MAX_LEVELS = 10
+    def __init__(self, x, y, width, height, shapes=[], level=0):
         self.x = x
         self.y = y
         self.width = width
         self.height = height
-        self.capacity = capacity
         self.level = level
+        self.shapes = shapes
+        self.children = [None] * 4
+
+    def check(self):
+        sub_QuadTree = [[]] * 4
+        half_width, half_height = self.width/2, self.height/2
+        x1 = self.x
+        y1 = self.y
+        x2 = self.x + half_width
+        y2 = self.y + half_height
+        x3 = self.x + self.width
+        y3 = self.y + self.height
+
+        if len(self.shapes) >= self.__MAX_OBJECTS:
+            for shape in self.shapes:
+                if (x1 <= shape.x <= x2) and (y1 <= shape.y <= y2):
+                    sub_QuadTree[0].append(shape)
+                elif (x2 <= shape.x <= x3) and (y1 <= shape.y <= y2):
+                    sub_QuadTree[1].append(shape)
+                elif (x1 <= shape.x <= x2) and (y2 <= shape.y <= y3):
+                    sub_QuadTree[2].append(shape)
+                elif (x2 <= shape.x <= x3) and (y2 <= shape.y <= y3):
+                    sub_QuadTree[3].append(shape)
+
+            self.children = [QuadTree(x1, y1, half_width, half_height, sub_QuadTree[0], self.level+1),
+                            QuadTree(x2, y1, half_width, half_height, sub_QuadTree[1], self.level+1),
+                            QuadTree(x1, y2, half_width, half_height, sub_QuadTree[2], self.level+1),
+                            QuadTree(x2, y2, half_width, half_height, sub_QuadTree[3], self.level+1)]
+
+
+            for i, child in enumerate(self.children):
+                if child is not None:
+                    if len(child.shapes) >= self.__MAX_OBJECTS:
+                        self.children[i].check()
+                    else:
+                        self.children[i] = None
+
+    def render_quadtree(self):
+        sub = []
+        for _ in self.children:
+            if _ is not None:
+                sub.append(Rect(x=_.x, y=_.y, width=_.width, height=_.height, color=(randint(0,255), randint(0,255), randint(0,255), 30)))
+                sub += _.render_quadtree()
+        return sub
+
+
+    def clear(self):
         self.shapes = []
-        self.children = None
+
 
     def subdivide(self):
         x1 = self.x
