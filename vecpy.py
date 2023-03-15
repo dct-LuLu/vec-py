@@ -108,19 +108,21 @@ class Sim:
         for _ in self.torender:
             _.draw()
 
+        self.not_shapes = self.quadtree.render_quadtree()
         for _ in self.not_shapes:
             _.draw()
 
 
     def update(self, dt):
+        self.quadtree.check()
         for i, shape in enumerate(self.shapes):
             if shape.movable and shape != self.drag_object:
                 shape.speed_gravity += shape.gravity * dt
                 shape.speed_y -= shape.speed_gravity * dt
-                shape.y += shape.speed_y * dt/1000
+                shape.y += shape.speed_y * dt *100
 
                 shape.speed_x *= 0.999
-                shape.x += shape.speed_x * dt/1000
+                shape.x += shape.speed_x * dt *100
 
                 if ((shape.y + shape.radius) < 0) or \
                     ((shape.x - shape.radius) > self.width) or \
@@ -203,7 +205,7 @@ class QuadTree:
         sub = []
         for _ in self.children:
             if _ is not None:
-                sub.append(Rect(x=_.x, y=_.y, width=_.width, height=_.height, color=(randint(0,255), randint(0,255), randint(0,255), 30)))
+                sub.append(Rect(x=_.x, y=_.y, width=_.width, height=_.height, color=(5*self.level,222,102, 10*self.level)))
                 sub += _.render_quadtree()
         return sub
 
@@ -264,4 +266,4 @@ class QuadTree:
 
 
 if __name__ == "__main__":
-    fsim = Wind(width=800, height=600) # 800 , 600
+    fsim = Wind(width=1920, height=1080) # 800 , 600
