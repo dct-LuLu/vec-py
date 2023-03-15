@@ -33,10 +33,7 @@ class Rect(PhysicalObject, shapes.Rectangle):
         PhysicalObject.__init__(self, draggable, movable, speed_x, speed_y)
 
     def bounds(self, cx, cy) -> bool:
-        if (self.x <= cx <= self.x + self.width) and (self.y <= cy <= self.y + self.height):
-            return True
-        return False
-
+        return (self.x <= cx <= self.x + self.width) and (self.y <= cy <= self.y + self.height)
 
 class Circ(PhysicalObject, shapes.Circle):
     def __init__(self, draggable=True, movable=True, speed_x=0, speed_y=0, *args, **kwargs):
@@ -44,9 +41,7 @@ class Circ(PhysicalObject, shapes.Circle):
         PhysicalObject.__init__(self, draggable, movable, speed_x, speed_y)
 
     def bounds(self, cx, cy) -> bool:
-        if self.radius >= math.sqrt((cx-self.x)**2+(cy-self.y)**2):
-            return True
-        return False
+        return self.radius >= math.sqrt((cx-self.x)**2+(cy-self.y)**2)
 
 class Events:
     def __init__(self):
@@ -238,12 +233,14 @@ class QuadTree:
         if len(self.shapes) < self.capacity:
             self.shapes.append(shape)
             return True
-        else:
-            if self.children is None:
-                self.subdivide()
-            for child in self.children:
-                if child.insert(shape):
-                    return True
+
+        if self.children is None:
+            self.subdivide()
+
+        for child in self.children:
+            if child.insert(shape):
+                return True
+            
         return False
 
     def contains(self, shape: PhysicalObject):
