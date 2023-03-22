@@ -4,6 +4,7 @@ from random import randint
 import pyglet
 import pyglet.shapes as shapes
 from pyglet.window import mouse
+import numpy as np
 
 
 class PhysicalObject():
@@ -16,19 +17,51 @@ class PhysicalObject():
     def get_tag(self) -> str:
         return f"{self.__class__.__name__} x: {int(self.x)} y:{int(self.y)} col:{self.color[0], self.color[1], self.color[2]}"
 
+    def colision(obj1, obj2, dt):
+        #print(f"BEFORE1: {obj1.velocity}\nBEFORE2: {obj2.velocity}\n")
+        obj1.velocity = np.array(obj1.velocity)
+        obj2.velocity = np.array(obj2.velocity)
+
+        coord1 = np.array([obj1.x, obj1.y])
+        coord2 = np.array([obj2.x, obj2.y])
+
+        r = math.sqrt(sum((coord1-coord2)**2))
+        n = (coord2-coord1)/r
+        t = np.array(-n[1], n[0])
+
+        v1n = np.dot(obj1.velocity, n)
+        v1t = np.dot(obj1.velocity, t)
+        v2n = np.dot(obj2.velocity, n)
+        v2t = np.dot(obj2.velocity, t)
+
+        u1n = (v1n * (obj1.mass-obj2.mass) + 2 * obj2.mass * v2n) / (obj1.mass+obj2.mass)
+        u2n = (v2n * (obj2.mass-obj1.mass) + 2 * obj1.mass * v1n) / (obj1.mass+obj2.mass)
+
+        u1t = v1t
+        u2t = v2t
+
+        obj1.velocity = (u1n * n + u1t * t) * dt
+        obj2.velocity = (u2n * n + u2t * t) * dt
+
+        #print(f"AFTER1: {obj1.velocity}\nAFTER2: {obj2.velocity}\n")
+
 
 class Rect(PhysicalObject, shapes.Rectangle):
-    def __init__(self, draggable=True, movable=True, velocity=[0, 0], acceleration=[0, 0], *args, **kwargs):
+    def __init__(self, draggable=True, movable=True, velocity=[0, 0], acceleration=[0, 0], density=7850, *args, **kwargs):
         shapes.Rectangle.__init__(self, *args, **kwargs)
         PhysicalObject.__init__(self, draggable, movable, velocity, acceleration)
+        self.density = density
+        self.mass = self.width * self.height * self.density
 
     def bounds(self, cx, cy) -> bool:
         return (self.x <= cx <= self.x + self.width) and (self.y <= cy <= self.y + self.height)
 
 class Circ(PhysicalObject, shapes.Circle):
-    def __init__(self, draggable=True, movable=True, velocity=[0, 0], acceleration=[0, 0], *args, **kwargs):
+    def __init__(self, draggable=True, movable=True, velocity=[0, 0], acceleration=[0, 0], density=7850 , *args, **kwargs):
         shapes.Circle.__init__(self, *args, **kwargs)
         PhysicalObject.__init__(self, draggable, movable, velocity, acceleration)
+        self.density = density
+        self.mass = math.pi * self.radius * self.density
 
     def bounds(self, cx, cy) -> bool:
         return self.radius >= math.sqrt((cx-self.x)**2+(cy-self.y)**2)
@@ -86,15 +119,10 @@ class Sim:
 
         self.ground = Rect(x=0, y=0, width=self.width, height=int(1/30*self.height), color=(93,23,222,89), movable=False, draggable=False)
 
-        self.radoms = [Circ(x=randint(100, self.width-100),
-                       y=randint(100, self.height-100),
-                       radius=randint(20, 30),
-                       color=(randint(0,255), randint(0,255), randint(0,255), 255),
-                       velocity=[randint(-5,5), randint(-5,5)])
-                    for _ in range(randint(0, 10))]
+        self.radoms = [Circ(x=randint(100, self.width-100),y=randint(100, self.height-100),radius=randint(10,60),color=(randint(0,255), randint(0,255), randint(0,255), 255),velocity=[randint(-5,5), randint(-5,5)]),
+                       Circ(x=randint(100, self.width-200),y=randint(100, self.height-200),radius=randint(10,60),color=(randint(0,255), randint(0,255), randint(0,255), 255),velocity=[randint(-5,5), randint(-5,5)])]
 
         self.torender = [self.main_batch, self.counter, self.label, self.ground, self.circle] + self.radoms
-        print(self.torender)
         self.target = self.circle
 
     # EVENT
@@ -111,6 +139,7 @@ class Sim:
     def update(self, dt):
         dt *= 100
         #self.quadtree.check()
+        #print(math.sqrt((self.radoms[0].x-self.radoms[1].x)**2 + (self.radoms[0].y-self.radoms[1].y)**2) - (self.radoms[0].radius + self.radoms[1].radius+5))
         for shape in self.shapes:
             if shape.movable and shape != self.drag_object:
 
@@ -118,23 +147,23 @@ class Sim:
                 shape.velocity[1] += shape.acceleration[1] * dt
 
                 if shape.x + shape.radius >= self.width:
-                    print("droite")
+                    #print("droite")
                     shape.velocity[0] = -shape.velocity[0]
                     shape.x = self.width - shape.radius - 1
 
                 if shape.x - shape.radius <= 0:
-                    print("gauche")
+                    #print("gauche")
 
                     shape.velocity[0] = -shape.velocity[0]
                     shape.x = shape.radius + 1
 
                 if shape.y + shape.radius >= self.height:
-                    print("haut")
+                    #print("haut")
                     shape.velocity[1] = -shape.velocity[1]
                     shape.y = self.height - shape.radius - 1
 
                 if shape.y - shape.radius <= 0:
-                    print("bas")
+                    #print("bas")
                     shape.velocity[1] = -shape.velocity[1]
                     shape.y = shape.radius + 1
  
@@ -142,6 +171,12 @@ class Sim:
                 shape.y += shape.velocity[1] * dt
         
         self.label.text = f"nb: {len(self.shapes)} x: {int(self.target.x)} y:{int(self.target.y)} dx:{int(self.target.velocity[0])} dy:{int(self.target.velocity[1])}"
+
+        if (int(math.sqrt((self.radoms[0].x-self.radoms[1].x)**2 + (self.radoms[0].y-self.radoms[1].y)**2)) <= (self.radoms[0].radius + self.radoms[1].radius+5)) :
+            self.label.color = (255,255,100, 255)
+            PhysicalObject.colision(self.radoms[0], self.radoms[1], dt)
+        else:
+            self.label.color = (122, 122, 122, 255)
 
     
 class Wind(Sim, Events, pyglet.window.Window):
