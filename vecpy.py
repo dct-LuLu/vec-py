@@ -7,38 +7,28 @@ from pyglet.window import mouse
 
 
 class PhysicalObject():
-    def __init__(self, movable, draggable, speed_x=0, speed_y=0, gravity=0.5, speed_gravity=0):
-        self.speed_x = speed_x
-        self.speed_y = speed_y
-        self.gravity = gravity
-        self.speed_gravity = speed_gravity
+    def __init__(self, movable, draggable, velocity=[0, 0], acceleration=[0, 0]):
+        self.velocity = velocity
+        self.acceleration = acceleration
         self.movable = movable
         self.draggable = draggable
-
-    def contact(self):
-        self.speed_x = 0
-        self.speed_y = 0
-        self.speed_gravity = 0
-
-    def collision(self, other) -> bool:
-        pass
 
     def get_tag(self) -> str:
         return f"{self.__class__.__name__} x: {int(self.x)} y:{int(self.y)} col:{self.color[0], self.color[1], self.color[2]}"
 
 
 class Rect(PhysicalObject, shapes.Rectangle):
-    def __init__(self, draggable=True, movable=True, speed_x=0, speed_y=0, *args, **kwargs):
+    def __init__(self, draggable=True, movable=True, velocity=[0, 0], acceleration=[0, 0], *args, **kwargs):
         shapes.Rectangle.__init__(self, *args, **kwargs)
-        PhysicalObject.__init__(self, draggable, movable, speed_x, speed_y)
+        PhysicalObject.__init__(self, draggable, movable, velocity, acceleration)
 
     def bounds(self, cx, cy) -> bool:
         return (self.x <= cx <= self.x + self.width) and (self.y <= cy <= self.y + self.height)
 
 class Circ(PhysicalObject, shapes.Circle):
-    def __init__(self, draggable=True, movable=True, speed_x=0, speed_y=0, *args, **kwargs):
+    def __init__(self, draggable=True, movable=True, velocity=[0, 0], acceleration=[0, 0], *args, **kwargs):
         shapes.Circle.__init__(self, *args, **kwargs)
-        PhysicalObject.__init__(self, draggable, movable, speed_x, speed_y)
+        PhysicalObject.__init__(self, draggable, movable, velocity, acceleration)
 
     def bounds(self, cx, cy) -> bool:
         return self.radius >= math.sqrt((cx-self.x)**2+(cy-self.y)**2)
@@ -47,26 +37,27 @@ class Events:
     def __init__(self):
         self.drag_object = None
 
-    # EVENT
-    def on_mouse_drag(self, x, y, dx, dy, buttons, modifiers):
-        if buttons & mouse.LEFT:
-            if self.drag_object is not None: # On peut potentiellement aussi calculer la distance entre le curseur et le point central de l'objet et le modifier en gardant cette distance
-                self.drag_object.x += dx
-                self.drag_object.y += dy
-                self.drag_object.speed_x = dx
-                self.drag_object.speed_y = dy
-
-    # EVENT
+    # FIRST HIT
     def on_mouse_press(self, x, y, button, modifiers):
         if button == mouse.LEFT:
             for _ in self.shapes:
                 if _.bounds(x, y) and _.draggable and self.drag_object is None:
                     self.drag_object = _
-                    self.drag_object.speed_gravity = 0
-                    self.drag_object.speed_x = 0
-                    self.drag_object.speed_y = 0
+                    self.target = self.drag_object
+                    #self.drag_object.speed_gravity = 0
+                    self.drag_object.velocity = [0, 0]
 
-    # EVENT
+    # WHILE
+    def on_mouse_drag(self, x, y, dx, dy, buttons, modifiers):
+        if buttons & mouse.LEFT:
+            if self.drag_object is not None: # On peut potentiellement aussi calculer la distance entre le curseur et le point central de l'objet et le modifier en gardant cette distance
+                self.drag_object.x += dx
+                self.drag_object.y += dy
+                #self.drag_object.speed_x = dx
+                #self.drag_object.speed_y = dy
+                self.drag_object.velocity = [dx, dy]
+
+    # AFTER
     def on_mouse_release(self, x, y, button, modifiers):
         if button & mouse.LEFT:
             if self.drag_object is not None:
@@ -78,10 +69,10 @@ class Sim:
     def __init__(self):
         self.init_render_objects()
         #Faire un truc qui choppe auto les draggable et movables
-        self.shapes = [self.circle, self.midcircle, self.ground] + self.radoms # TODO: ne pas utiliser de liste et aller chercher directement dans les instances de PhysicalObject
-        self.quadtree = QuadTree(0, 0, self.width, self.height, self.shapes) # TODO: setup la quadtree map
-        self.quadtree.check()
-        self.not_shapes = self.quadtree.render_quadtree()
+        self.shapes = [self.circle, self.ground] + self.radoms # TODO: ne pas utiliser de liste et aller chercher directement dans les instances de PhysicalObject
+        #self.quadtree = QuadTree(0, 0, self.width, self.height, self.shapes) # TODO: setup la quadtree map
+        #self.quadtree.check()
+        #self.not_shapes = self.quadtree.render_quadtree()
 
     def init_render_objects(self):
         self.main_batch = pyglet.graphics.Batch()
@@ -90,17 +81,21 @@ class Sim:
                           font_size=36,
                           x=self.width//2, y=self.height//2,
                           anchor_x='center', anchor_y='center')
-        self.circle = Circ(x=self.width//2, y=850, radius=100, color=(50, 225, 30))
-        self.midcircle = Circ(x=self.circle.x, y=self.circle.y, radius=2, color=(245, 40, 145, 120), draggable=False)
+
+        self.circle = Circ(x=self.width//2, y=self.height//2, radius=100, color=(50, 225, 30))
+
         self.ground = Rect(x=0, y=0, width=self.width, height=int(1/30*self.height), color=(93,23,222,89), movable=False, draggable=False)
+
         self.radoms = [Circ(x=randint(100, self.width-100),
                        y=randint(100, self.height-100),
-                       radius=randint(2, 3),
+                       radius=randint(20, 30),
                        color=(randint(0,255), randint(0,255), randint(0,255), 255),
-                       speed_x=randint(-5, 5),
-                       speed_y=randint(-5, 5))
-                    for _ in range(randint(0, 200))]
-        self.torender = [self.main_batch, self.counter, self.label, self.ground, self.midcircle, self.circle] + self.radoms
+                       velocity=[randint(-5,5), randint(-5,5)])
+                    for _ in range(randint(0, 10))]
+
+        self.torender = [self.main_batch, self.counter, self.label, self.ground, self.circle] + self.radoms
+        print(self.torender)
+        self.target = self.circle
 
     # EVENT
     def on_draw(self):
@@ -108,36 +103,45 @@ class Sim:
         for _ in self.torender:
             _.draw()
 
-        self.not_shapes = self.quadtree.render_quadtree()
-        for _ in self.not_shapes:
-            _.draw()
+        #self.not_shapes = self.quadtree.render_quadtree()
+        #for _ in self.not_shapes:
+        #    _.draw()
 
 
     def update(self, dt):
-        self.quadtree.check()
-        for i, shape in enumerate(self.shapes):
+        dt *= 100
+        #self.quadtree.check()
+        for shape in self.shapes:
             if shape.movable and shape != self.drag_object:
-                shape.speed_gravity += shape.gravity * dt
-                shape.speed_y -= shape.speed_gravity * dt
-                shape.y += shape.speed_y * dt /100
 
-                shape.speed_x *= 0.999
-                shape.x += shape.speed_x * dt /100
+                shape.velocity[0] += shape.acceleration[0] * dt
+                shape.velocity[1] += shape.acceleration[1] * dt
 
-                if ((shape.y + shape.radius) < 0) or \
-                    ((shape.x - shape.radius) > self.width) or \
-                    ((shape.x + shape.radius)) < 0:
-                    self.shapes.pop(i)
-                    self.torender.pop(self.torender.index(shape))
-                    #print(f"{shape.get_tag()} died, his famous last words were:\n{shape.radius * 'a'}\n")
+                if shape.x + shape.radius >= self.width:
+                    print("droite")
+                    shape.velocity[0] = -shape.velocity[0]
+                    shape.x = self.width - shape.radius - 1
 
+                if shape.x - shape.radius <= 0:
+                    print("gauche")
 
+                    shape.velocity[0] = -shape.velocity[0]
+                    shape.x = shape.radius + 1
 
+                if shape.y + shape.radius >= self.height:
+                    print("haut")
+                    shape.velocity[1] = -shape.velocity[1]
+                    shape.y = self.height - shape.radius - 1
 
-
-        self.midcircle.x, self.midcircle.y = self.circle.x, self.circle.y
+                if shape.y - shape.radius <= 0:
+                    print("bas")
+                    shape.velocity[1] = -shape.velocity[1]
+                    shape.y = shape.radius + 1
+ 
+                shape.x += shape.velocity[0] * dt
+                shape.y += shape.velocity[1] * dt
         
-        self.label.text = f"nb: {len(self.shapes)} x: {int(self.circle.x)} y:{int(self.circle.y)} dx:{int(self.circle.speed_x)} dy:{int(self.circle.speed_y)}"
+        self.label.text = f"nb: {len(self.shapes)} x: {int(self.target.x)} y:{int(self.target.y)} dx:{int(self.target.velocity[0])} dy:{int(self.target.velocity[1])}"
 
     
 class Wind(Sim, Events, pyglet.window.Window):
@@ -169,13 +173,12 @@ class QuadTree:
         self.children = [None] * 4
     
     def check(self):
-        sub_QuadTree = [[] for _ in range(4)] # Use list comprehension to initialize sub_QuadTree
+        sub_QuadTree = [[]] * 4
         half_width, half_height = self.width/2, self.height/2
         x1, y1 = self.x, self.y
         x2, y2 = self.x + half_width, self.y + half_height
         x3, y3 = self.x + self.width, self.y + self.height
 
-        # Iterate through shapes only once
         for shape in self.shapes:
             if (x1 <= shape.x <= x2) and (y1 <= shape.y <= y2):
                 sub_QuadTree[0].append(shape)
@@ -186,9 +189,9 @@ class QuadTree:
             elif (x2 <= shape.x <= x3) and (y2 <= shape.y <= y3):
                 sub_QuadTree[3].append(shape)
 
-        # Recursively create children only for non-empty sub-Quadtrees
+
         for i, sub_shapes in enumerate(sub_QuadTree):
-            if len(sub_shapes) > self.__MAX_OBJECTS and self.level < self.__MAX_LEVELS:
+            if len(sub_shapes) >= self.__MAX_OBJECTS and self.level < self.__MAX_LEVELS:
                 self.children[i] = QuadTree(*self.get_sub_quadtree_coords(i), sub_shapes, self.level+1)
                 self.children[i].check()
             else:
@@ -216,7 +219,7 @@ class QuadTree:
             return x2, y2, half_width, half_height
 
 if __name__ == "__main__":
-    fsim = Wind(width=1920, height=1080) # 800 , 600
+    fsim = Wind(width=800, height=600) # 800 , 600
 
 # Mettez en cache les nœuds: Lorsque vous construisez le Quadtree, stockez les nœuds créés dans une liste ou un dictionnaire.
 # Lorsque vous mettez à jour le Quadtree, utilisez les nœuds précédemment créés plutôt que de les recréer à chaque fois.
