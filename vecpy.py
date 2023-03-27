@@ -72,22 +72,27 @@ class Circ(PhysicalObject, shapes.Circle):
 class Events:
     def __init__(self):
         self.drag_object = None
+        self.cue = False
+        self.cursorpos = [0, 0]
 
     # FIRST HIT
     def on_mouse_press(self, x, y, button, modifiers):
-        if button == mouse.LEFT:
+        self.cursorpos = [x, y]
+        if button == mouse.LEFT or button == mouse.RIGHT:
             for _ in self.shapes:
                 if _.bounds(x, y) and _.draggable and self.drag_object is None:
                     self.drag_object = _
                     self.target = self.drag_object
                     #self.drag_object.speed_gravity = 0
-                    self.drag_object.velocity = [0, 0]
+                    if button == mouse.LEFT:
+                        self.drag_object.velocity = [0, 0]
 
-        elif button == mouse.RIGHT:
-            pass
+                    elif button == mouse.RIGHT:
+                        self.cue = True
 
     # WHILE
     def on_mouse_drag(self, x, y, dx, dy, buttons, modifiers):
+        self.cursorpos = [x, y]
         if buttons & mouse.LEFT:
             if self.drag_object is not None: # On peut potentiellement aussi calculer la distance entre le curseur et le point central de l'objet et le modifier en gardant cette distance
                 self.drag_object.x += dx
@@ -95,9 +100,8 @@ class Events:
                 #self.drag_object.speed_x = dx
                 #self.drag_object.speed_y = dy
                 self.drag_object.velocity = [dx*100, dy*100]
+                
 
-        elif buttons & mouse.RIGHT:
-            pass
 
     # AFTER
     def on_mouse_release(self, x, y, button, modifiers):
@@ -107,7 +111,12 @@ class Events:
                 self.drag_object = None
 
         elif button & mouse.RIGHT:
-            pass
+            if self.drag_object is not None:
+                self.drag_object.velocity[0] = 5 * (self.drag_object.x - x)
+                self.drag_object.velocity[1] = 5 * (self.drag_object.y - y)
+                self.cue = False
+                self.drag_object = None
+                #self.torender.pop()
 
 
 class Sim:
@@ -134,7 +143,8 @@ class Sim:
         self.radoms = [Circ(x=randint(100, self.width-100),y=randint(100, self.height-100),radius=randint(10,60),color=(randint(0,255), randint(0,255), randint(0,255), 255),velocity=[randint(-500,500), randint(-500,500)]),
                        Circ(x=randint(100, self.width-200),y=randint(100, self.height-200),radius=randint(10,60),color=(randint(0,255), randint(0,255), randint(0,255), 255),velocity=[randint(-500,500), randint(-500,500)])]
 
-        self.torender = [self.main_batch, self.counter, self.label, self.ground, self.circle] + self.radoms
+        self.cue_line = shapes.Line(0, 0, 0, 0, 0, color = (120, 35, 120, 120), batch = self.main_batch)
+        self.torender = [self.main_batch, self.counter, self.label, self.ground, self.circle] + self.radoms + [self.cue_line]
         self.target = self.circle
 
     # EVENT
@@ -152,8 +162,21 @@ class Sim:
         #dt *= 100
         #self.quadtree.check()
         #print(math.sqrt((self.radoms[0].x-self.radoms[1].x)**2 + (self.radoms[0].y-self.radoms[1].y)**2) - (self.radoms[0].radius + self.radoms[1].radius+5))
+        if self.cue:
+            self.cue_line.x = self.drag_object.x
+            self.cue_line.y = self.drag_object.y
+            self.cue_line.x2 = self.cursorpos[0]
+            self.cue_line.y2 = self.cursorpos[1]
+            self.cue_line._width = 5
+        else:
+            self.cue_line.x = 0
+            self.cue_line.y = 0
+            self.cue_line.x2 = 0
+            self.cue_line.y2 = 0
+            self.cue_line._width = 0
+
         for shape in self.shapes:
-            if shape.movable and shape != self.drag_object:
+            if shape.movable and not (shape == self.drag_object and not self.cue):
 
                 shape.acceleration[0] = -shape.velocity[0] * 0.8
                 shape.acceleration[1] = -shape.velocity[1] * 0.8
