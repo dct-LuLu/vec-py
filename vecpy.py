@@ -17,7 +17,7 @@ class PhysicalObject():
     def get_tag(self) -> str:
         return f"{self.__class__.__name__} x: {int(self.x)} y:{int(self.y)} col:{self.color[0], self.color[1], self.color[2]}"
 
-    def colision(obj1, obj2, dt):
+    def colision(self, obj1, obj2, dt):
         #print(f"BEFORE1: {obj1.velocity}\nBEFORE2: {obj2.velocity}\n")
         obj1.velocity = np.array(obj1.velocity)
         obj2.velocity = np.array(obj2.velocity)
@@ -40,8 +40,11 @@ class PhysicalObject():
         u1t = v1t
         u2t = v2t
 
-        obj1.velocity = (u1n * n + u1t * t) * dt
-        obj2.velocity = (u2n * n + u2t * t) * dt
+        if obj1 != self.drag_object:
+            obj1.velocity = u1n * n + u1t * t
+
+        if obj2 != self.drag_object:
+            obj2.velocity = u2n * n + u2t * t
 
         #print(f"AFTER1: {obj1.velocity}\nAFTER2: {obj2.velocity}\n")
 
@@ -80,6 +83,9 @@ class Events:
                     #self.drag_object.speed_gravity = 0
                     self.drag_object.velocity = [0, 0]
 
+        elif button == mouse.RIGHT:
+            pass
+
     # WHILE
     def on_mouse_drag(self, x, y, dx, dy, buttons, modifiers):
         if buttons & mouse.LEFT:
@@ -88,7 +94,10 @@ class Events:
                 self.drag_object.y += dy
                 #self.drag_object.speed_x = dx
                 #self.drag_object.speed_y = dy
-                self.drag_object.velocity = [dx, dy]
+                self.drag_object.velocity = [dx*100, dy*100]
+
+        elif buttons & mouse.RIGHT:
+            pass
 
     # AFTER
     def on_mouse_release(self, x, y, button, modifiers):
@@ -96,6 +105,9 @@ class Events:
             if self.drag_object is not None:
                 #print(f"speed_x: {self.drag_object.speed_x}, speed_y: {self.drag_object.speed_y}")
                 self.drag_object = None
+
+        elif button & mouse.RIGHT:
+            pass
 
 
 class Sim:
@@ -119,8 +131,8 @@ class Sim:
 
         self.ground = Rect(x=0, y=0, width=self.width, height=int(1/30*self.height), color=(93,23,222,89), movable=False, draggable=False)
 
-        self.radoms = [Circ(x=randint(100, self.width-100),y=randint(100, self.height-100),radius=randint(10,60),color=(randint(0,255), randint(0,255), randint(0,255), 255),velocity=[randint(-5,5), randint(-5,5)]),
-                       Circ(x=randint(100, self.width-200),y=randint(100, self.height-200),radius=randint(10,60),color=(randint(0,255), randint(0,255), randint(0,255), 255),velocity=[randint(-5,5), randint(-5,5)])]
+        self.radoms = [Circ(x=randint(100, self.width-100),y=randint(100, self.height-100),radius=randint(10,60),color=(randint(0,255), randint(0,255), randint(0,255), 255),velocity=[randint(-500,500), randint(-500,500)]),
+                       Circ(x=randint(100, self.width-200),y=randint(100, self.height-200),radius=randint(10,60),color=(randint(0,255), randint(0,255), randint(0,255), 255),velocity=[randint(-500,500), randint(-500,500)])]
 
         self.torender = [self.main_batch, self.counter, self.label, self.ground, self.circle] + self.radoms
         self.target = self.circle
@@ -137,12 +149,14 @@ class Sim:
 
 
     def update(self, dt):
-        dt *= 100
+        #dt *= 100
         #self.quadtree.check()
         #print(math.sqrt((self.radoms[0].x-self.radoms[1].x)**2 + (self.radoms[0].y-self.radoms[1].y)**2) - (self.radoms[0].radius + self.radoms[1].radius+5))
         for shape in self.shapes:
             if shape.movable and shape != self.drag_object:
 
+                shape.acceleration[0] = -shape.velocity[0] * 0.8
+                shape.acceleration[1] = -shape.velocity[1] * 0.8
                 shape.velocity[0] += shape.acceleration[0] * dt
                 shape.velocity[1] += shape.acceleration[1] * dt
 
@@ -169,12 +183,32 @@ class Sim:
  
                 shape.x += shape.velocity[0] * dt
                 shape.y += shape.velocity[1] * dt
+
+                if abs(shape.velocity[0]**2 + shape.velocity[1]**2) < 0.01:
+                    shape.velocity = [0, 0]
         
         self.label.text = f"nb: {len(self.shapes)} x: {int(self.target.x)} y:{int(self.target.y)} dx:{int(self.target.velocity[0])} dy:{int(self.target.velocity[1])}"
 
-        if (int(math.sqrt((self.radoms[0].x-self.radoms[1].x)**2 + (self.radoms[0].y-self.radoms[1].y)**2)) <= (self.radoms[0].radius + self.radoms[1].radius+5)) :
+        #if (int(math.sqrt((self.radoms[0].x-self.radoms[1].x)**2 + (self.radoms[0].y-self.radoms[1].y)**2)) <= (self.radoms[0].radius + self.radoms[1].radius)) : # +5?
+        if abs((self.radoms[0].x-self.radoms[1].x)**2 + (self.radoms[0].y-self.radoms[1].y)**2) <= (self.radoms[0].radius + self.radoms[1].radius)**2: # plus rapide sans la racine carré
+            distance = math.sqrt((self.radoms[0].x-self.radoms[1].x)**2 + (self.radoms[0].y-self.radoms[1].y)**2)
+
+            overlap = distance - self.radoms[0].radius - self.radoms[1].radius
+            if self.radoms[0] != self.drag_object and self.radoms[1] != self.drag_object:
+                overlap *= 0.5
+            else:
+                overlap *= 2
+
+            if self.radoms[0] != self.drag_object:
+                self.radoms[0].x -= overlap * (self.radoms[0].x - self.radoms[1].x) / distance
+                self.radoms[0].y -= overlap * (self.radoms[0].y - self.radoms[1].y) / distance
+
+            if self.radoms[1] != self.drag_object:
+                self.radoms[1].x -= overlap * (self.radoms[1].x - self.radoms[0].x) / distance
+                self.radoms[1].y -= overlap * (self.radoms[1].y - self.radoms[0].y) / distance
+
             self.label.color = (255,255,100, 255)
-            PhysicalObject.colision(self.radoms[0], self.radoms[1], dt)
+            PhysicalObject.colision(self, self.radoms[0], self.radoms[1], dt)
         else:
             self.label.color = (122, 122, 122, 255)
 
