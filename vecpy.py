@@ -135,15 +135,15 @@ class Sim:
 
     def init_render_objects(self):
         main_batch = pyglet.graphics.Batch()
+        ground = Rect(x=0, y=0, width=self.width, height=int(1/30*self.height), color=(93,23,222,89), movable=False, draggable=False)
         counter = pyglet.window.FPSDisplay(window=self)
         label = pyglet.text.Label("", color=(122, 122, 122, 255), font_size=36, x=self.width//2, y=self.height//2, anchor_x='center', anchor_y='center')
-        ground = Rect(x=0, y=0, width=self.width, height=int(1/30*self.height), color=(93,23,222,89), movable=False, draggable=False)
         cue_line = shapes.Line(0, 0, 0, 0, 0, color = (120, 35, 120, 120), batch = main_batch)
         self.sp = {n: v for n, v in vars().items() if n != "self"}
         #print(self.sp)
 
         #self.circle = Circ(x=self.width//2, y=self.height//2, radius=100, color=(50, 225, 30))
-        [Circ(x=randint(100, self.width-100), y=randint(100, self.height-100), radius=randint(10,60), color=(randint(0,255), randint(0,255), randint(0,255), 255), velocity=[randint(-500,500), randint(-500,500)]) for x in range(randint(2, 10))]
+        [Circ(x=randint(100, self.width-100), y=randint(100, self.height-100), radius=randint(5,80), color=(randint(0,255), randint(0,255), randint(0,255), 255), velocity=[randint(-1000,1000), randint(-1000,1000)]) for x in range(randint(2, 10))]
 
     def get_sim_attributes(self):
         sim_attributes = {k: v for k, v in self.__class__.__dict__.items() if not k.startswith('__')}
@@ -165,9 +165,6 @@ class Sim:
 
 
     def update(self, dt):
-        #dt *= 100
-        #self.quadtree.check()
-        #print(math.sqrt((shape_a.x-shape_b.x)**2 + (shape_a.y-shape_b.y)**2) - (shape_a.radius + shape_b.radius+5))
         if self.cue:
             self.sp["cue_line"].x = self.drag_object.x
             self.sp["cue_line"].y = self.drag_object.y
@@ -190,25 +187,20 @@ class Sim:
                 shape.velocity[1] += shape.acceleration[1] * dt
 
                 if shape.x + shape.radius >= self.width:
-                    #print("droite")
                     shape.velocity[0] = -shape.velocity[0]
-                    shape.x = self.width - shape.radius - 1
+                    shape.x = self.width - shape.radius
 
                 if shape.x - shape.radius <= 0:
-                    #print("gauche")
-
                     shape.velocity[0] = -shape.velocity[0]
-                    shape.x = shape.radius + 1
+                    shape.x = shape.radius
 
                 if shape.y + shape.radius >= self.height:
-                    #print("haut")
                     shape.velocity[1] = -shape.velocity[1]
-                    shape.y = self.height - shape.radius - 1
+                    shape.y = self.height - shape.radius
 
                 if shape.y - shape.radius <= 0:
-                    #print("bas")
                     shape.velocity[1] = -shape.velocity[1]
-                    shape.y = shape.radius + 1
+                    shape.y = shape.radius
  
                 shape.x += shape.velocity[0] * dt
                 shape.y += shape.velocity[1] * dt
@@ -223,17 +215,15 @@ class Sim:
         for shape_a in objects:
             if shape_a.movable and shape_a.draggable:
                 for shape_b in objects:
-                    if shape_b.movable and shape_b.draggable:
+                    if shape_b.movable and shape_b.draggable:# bouze temporaire en attendant l'imple du quadtree
                         if shape_b != shape_a:
-                            #if (int(math.sqrt((shape_a.x-shape_b.x)**2 + (shape_a.y-shape_b.y)**2)) <= (shape_a.radius + shape_b.radius)) : # +5?
-                            if abs((shape_a.x-shape_b.x)**2 + (shape_a.y-shape_b.y)**2) <= (shape_a.radius + shape_b.radius)**2: # plus rapide sans la racine carré
-                                distance = math.sqrt((shape_a.x-shape_b.x)**2 + (shape_a.y-shape_b.y)**2)
-                                print(f"dist: {distance} a:{shape_a.x, shape_a.y} b:{shape_b.x, shape_b.y}")
+                            if (shape_a.x-shape_b.x)**2 + (shape_a.y-shape_b.y)**2 <= (shape_a.radius + shape_b.radius)**2: # plus rapide sans la racine carré
+                                distance = math.sqrt((shape_a.x-shape_b.x)**2 + (shape_a.y-shape_b.y)**2) # par contre là on est obligé lol
                                 overlap = distance - shape_a.radius - shape_b.radius
                                 if shape_a != self.drag_object and shape_b != self.drag_object:
                                     overlap *= 0.5
                                 else:
-                                    overlap *= 2
+                                    overlap *= 2 # A CHANGER
 
                                 if shape_a != self.drag_object:
                                     shape_a.x -= overlap * (shape_a.x - shape_b.x) / distance
@@ -258,7 +248,7 @@ class Wind(Sim, Events, pyglet.window.Window):
         Sim.__init__(self)
         Events.__init__(self)
 
-        pyglet.clock.schedule_interval(self.update, 1 / 120.0)
+        pyglet.clock.schedule_interval(self.update, 1 / 1200.0)
         pyglet.app.run()
 
 
