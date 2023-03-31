@@ -86,7 +86,7 @@ class Events:
     # FIRST HIT
     def on_mouse_press(self, x, y, button, modifiers):
         self.cursorpos = [x, y]
-        if button == mouse.LEFT or button == mouse.RIGHT:
+        if button in (mouse.LEFT, mouse.RIGHT):
             for _ in PhysicalObject.get_instances():
                 if _.bounds(x, y) and _.draggable and self.drag_object is None:
                     self.drag_object = _
@@ -220,7 +220,7 @@ class Sim:
                             if (shape_a.x-shape_b.x)**2 + (shape_a.y-shape_b.y)**2 <= (shape_a.radius + shape_b.radius)**2: # plus rapide sans la racine carré
                                 distance = math.sqrt((shape_a.x-shape_b.x)**2 + (shape_a.y-shape_b.y)**2) # par contre là on est obligé lol
                                 overlap = distance - shape_a.radius - shape_b.radius
-                                if shape_a != self.drag_object and shape_b != self.drag_object:
+                                if self.drag_object not in (shape_a, shape_b):
                                     overlap *= 0.5
                                 else:
                                     overlap *= 2 # A CHANGER
