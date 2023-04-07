@@ -129,9 +129,8 @@ class Sim:
         self.init_render_objects()
 
 
-        #self.quadtree = QuadTree(0, 0, self.width, self.height, self.shapes) # TODO: setup la quadtree map
-        #self.quadtree.check()
-        #self.not_shapes = self.quadtree.render_quadtree()
+        self.quadtree = QuadTree(0, 0, self.width, self.height) # TODO: setup la quadtree map
+        self.quadtree.check()
 
     def init_render_objects(self):
         main_batch = pyglet.graphics.Batch()
@@ -158,10 +157,9 @@ class Sim:
         for _ in self.sp.values():
             _.draw()
 
-
-        #self.not_shapes = self.quadtree.render_quadtree()
-        #for _ in self.not_shapes:
-        #    _.draw()
+        #self.quadtree.check()
+        for _ in self.quadtree.get_quadtree_divisions():
+            _.draw()
 
 
     def update(self, dt):
@@ -238,7 +236,7 @@ class Sim:
                             else:
                                 self.sp["label"].color = (122, 122, 122, 255)
 
-    
+
 class Wind(Sim, Events, pyglet.window.Window):
     def __init__(self, *args, **kwargs):    
         # Création de la fenêtre
@@ -253,18 +251,18 @@ class Wind(Sim, Events, pyglet.window.Window):
 
 
 
-
 class QuadTree:
     __MAX_OBJECTS = 2
-    __MAX_LEVELS = 10
+    __MAX_LEVELS = 6
     
-    def __init__(self, x, y, width, height, shapes=[], level=0):
+    def __init__(self, x, y, width, height, phy_obj=[], level=0):
+        print(x, y, level)
         self.x = x
         self.y = y
         self.width = width
         self.height = height
         self.level = level
-        self.shapes = shapes
+        self.phy_obj = phy_obj
         self.children = [None] * 4
     
     def check(self):
@@ -274,30 +272,30 @@ class QuadTree:
         x2, y2 = self.x + half_width, self.y + half_height
         x3, y3 = self.x + self.width, self.y + self.height
 
-        for shape in self.shapes:
-            if (x1 <= shape.x <= x2) and (y1 <= shape.y <= y2):
-                sub_QuadTree[0].append(shape)
-            elif (x2 <= shape.x <= x3) and (y1 <= shape.y <= y2):
-                sub_QuadTree[1].append(shape)
-            elif (x1 <= shape.x <= x2) and (y2 <= shape.y <= y3):
-                sub_QuadTree[2].append(shape)
-            elif (x2 <= shape.x <= x3) and (y2 <= shape.y <= y3):
-                sub_QuadTree[3].append(shape)
+        for phy_obj in PhysicalObject.get_instances():
+            if (x1 <= phy_obj.x <= x2) and (y1 <= phy_obj.y <= y2):
+                sub_QuadTree[0].append(phy_obj)
+            elif (x2 <= phy_obj.x <= x3) and (y1 <= phy_obj.y <= y2):
+                sub_QuadTree[1].append(phy_obj)
+            elif (x1 <= phy_obj.x <= x2) and (y2 <= phy_obj.y <= y3):
+                sub_QuadTree[2].append(phy_obj)
+            elif (x2 <= phy_obj.x <= x3) and (y2 <= phy_obj.y <= y3):
+                sub_QuadTree[3].append(phy_obj)
 
 
-        for i, sub_shapes in enumerate(sub_QuadTree):
-            if len(sub_shapes) >= self.__MAX_OBJECTS and self.level < self.__MAX_LEVELS:
-                self.children[i] = QuadTree(*self.get_sub_quadtree_coords(i), sub_shapes, self.level+1)
+        for i, sub_phy_obj in enumerate(sub_QuadTree):
+            if len(sub_phy_obj) >= self.__MAX_OBJECTS and self.level < self.__MAX_LEVELS:
+                self.children[i] = QuadTree(*self.get_sub_quadtree_coords(i), sub_phy_obj, self.level+1)
                 self.children[i].check()
             else:
                 self.children[i] = None
 
-    def render_quadtree(self):
+    def get_quadtree_divisions(self):
         sub = []
         for child in self.children:
             if child is not None:
-                sub.append(Rect(x=child.x, y=child.y, width=child.width, height=child.height, color=(5*self.level,222,102, 10*self.level)))
-                sub += child.render_quadtree()
+                sub.append(Rect(x=child.x, y=child.y, width=child.width, height=child.height, color=(5*self.level,222,102, 10*self.level), movable=False, draggable=False))
+                sub += child.get_quadtree_divisions()
         return sub
     
     def get_sub_quadtree_coords(self, index):

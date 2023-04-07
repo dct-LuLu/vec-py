@@ -1,3 +1,5 @@
+Nom: ça balance pas mal (temporaire)
+
 ### Objectifs :
 -   Écrire un programme en Python pour créer un moteur de physique avec des objets géométriques de base tels que des cercles et des carrés, ainsi que des objets personnalisés dessinés par l'utilisateur, soumis à des lois de physique et à des collisions avec des pertes d'énergie. Le programme doit utiliser la librairie Pyglet pour afficher des graphismes.
 -   Utiliser un quadtree pour optimiser la détection de collisions et améliorer les performances.
