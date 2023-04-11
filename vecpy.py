@@ -18,8 +18,8 @@ class PhysicalObject():
         PhysicalObject.instances.add(self)
 
     @classmethod
-    def get_instances(cls):
-        return cls.instances
+    def get_movables(cls): #IF DRAGGABLE AND MOVABLE
+        return [i for i in cls.instances if i.movable]
 
     def get_tag(self) -> str:
         return f"{self.__class__.__name__} x: {int(self.x)} y:{int(self.y)} col:{self.color[0], self.color[1], self.color[2]}"
@@ -87,7 +87,7 @@ class Events:
     def on_mouse_press(self, x, y, button, modifiers):
         self.cursorpos = [x, y]
         if button in (mouse.LEFT, mouse.RIGHT):
-            for _ in PhysicalObject.get_instances():
+            for _ in PhysicalObject.get_movables():
                 if _.bounds(x, y) and _.draggable and self.drag_object is None:
                     self.drag_object = _
                     self.target = self.drag_object
@@ -131,6 +131,7 @@ class Sim:
 
         self.quadtree = QuadTree(0, 0, self.width, self.height) # TODO: setup la quadtree map
         self.quadtree.check()
+        self.quad_shape=self.quadtree.get_quadtree_divisions()
 
     def init_render_objects(self):
         main_batch = pyglet.graphics.Batch()
@@ -151,14 +152,15 @@ class Sim:
     # EVENT
     def on_draw(self):
         self.clear()
-        for _ in PhysicalObject.get_instances():
+        for _ in PhysicalObject.get_movables():
             _.draw()
 
         for _ in self.sp.values():
             _.draw()
 
-        #self.quadtree.check()
-        for _ in self.quadtree.get_quadtree_divisions():
+        self.quadtree.check()
+        self.quad_shape=self.quadtree.get_quadtree_divisions()
+        for _ in self.quad_shape:
             _.draw()
 
 
@@ -176,7 +178,7 @@ class Sim:
             self.sp["cue_line"].y2 = 0
             self.sp["cue_line"]._width = 0
 
-        for shape in PhysicalObject.get_instances():
+        for shape in PhysicalObject.get_movables():
             if shape.movable and not (shape == self.drag_object and not self.cue):
 
                 shape.acceleration[0] = -shape.velocity[0] * 0.8
@@ -207,9 +209,10 @@ class Sim:
                     shape.velocity = [0, 0]
         
         if self.target is not None:
-            self.sp["label"].text = f"nb: {len(PhysicalObject.get_instances())} x: {int(self.target.x)} y:{int(self.target.y)} dx:{int(self.target.velocity[0])} dy:{int(self.target.velocity[1])}"
+            feur = len([i for i in PhysicalObject.get_movables() if i.draggable and i.movable])
+            self.sp["label"].text = f"nb: {feur} x: {int(self.target.x)} y:{int(self.target.y)} dx:{int(self.target.velocity[0])} dy:{int(self.target.velocity[1])}"
 
-        objects = PhysicalObject.get_instances()
+        objects = PhysicalObject.get_movables()
         for shape_a in objects:
             if shape_a.movable and shape_a.draggable:
                 for shape_b in objects:
@@ -256,7 +259,6 @@ class QuadTree:
     __MAX_LEVELS = 6
     
     def __init__(self, x, y, width, height, phy_obj=[], level=0):
-        print(x, y, level)
         self.x = x
         self.y = y
         self.width = width
@@ -264,6 +266,7 @@ class QuadTree:
         self.level = level
         self.phy_obj = phy_obj
         self.children = [None] * 4
+        self.rect = Rect(x=x, y=y, width=width, height=height, color=(5*self.level,222,102, 10*self.level), movable=False, draggable=False)
     
     def check(self):
         sub_QuadTree = [[]] * 4
@@ -272,7 +275,7 @@ class QuadTree:
         x2, y2 = self.x + half_width, self.y + half_height
         x3, y3 = self.x + self.width, self.y + self.height
 
-        for phy_obj in PhysicalObject.get_instances():
+        for phy_obj in PhysicalObject.get_movables():
             if (x1 <= phy_obj.x <= x2) and (y1 <= phy_obj.y <= y2):
                 sub_QuadTree[0].append(phy_obj)
             elif (x2 <= phy_obj.x <= x3) and (y1 <= phy_obj.y <= y2):
@@ -294,7 +297,7 @@ class QuadTree:
         sub = []
         for child in self.children:
             if child is not None:
-                sub.append(Rect(x=child.x, y=child.y, width=child.width, height=child.height, color=(5*self.level,222,102, 10*self.level), movable=False, draggable=False))
+                sub.append(self.rect)
                 sub += child.get_quadtree_divisions()
         return sub
     
