@@ -10,11 +10,12 @@ import numpy as np
 class PhysicalObject():
     instances: set = set()
 
-    def __init__(self, movable, draggable, velocity=[0, 0], acceleration=[0, 0]):
+    def __init__(self, movable: bool, draggable: bool, velocity: list[int, int], acceleration: list[int, int], rotation: float):
         self.velocity = velocity
         self.acceleration = acceleration
         self.movable = movable
         self.draggable = draggable
+        self.rotation = abs(rotation)%360
         PhysicalObject.instances.add(self)
 
     @classmethod
@@ -55,20 +56,76 @@ class PhysicalObject():
 
 
 class Rect(PhysicalObject, shapes.Rectangle):
-    def __init__(self, draggable=True, movable=True, velocity=[0, 0], acceleration=[0, 0], density=7850, *args, **kwargs):
+    def __init__(self, movable: bool = True, draggable: bool = True, velocity: list[int, int]=[0, 0], acceleration: list[int, int]=[0, 0], rotation: float=0, density: int=7850, *args, **kwargs):
         shapes.Rectangle.__init__(self, *args, **kwargs)
-        PhysicalObject.__init__(self, draggable, movable, velocity, acceleration)
+        PhysicalObject.__init__(self, draggable, movable, velocity, acceleration, rotation)
         self.density = density
+        self.radius = 2 # FEURUURURUR
         self.mass = self.width * self.height * self.density
+        if movable: self.anchor_position = (self.width/2, self.height/2)
+
+    def get_corners(self) -> list:
+        r = math.radians(self.rotation+90%360)
+        u = (math.cos(r), -math.sin(r))
+        v = (-math.sin(r), -math.cos(r))
+        h, w = self.height/2, self.width/2
+        a = (self.x -h*u[0] +w*v[0], self.y -h*u[1] +w*v[1])
+        b = (self.x -h*u[0] -w*v[0], self.y -h*u[1] -w*v[1])
+        c = (self.x +h*u[0] -w*v[0], self.y +h*u[1] -w*v[1])
+        d = (self.x +h*u[0] +w*v[0], self.y +h*u[1] +w*v[1])
+        return [a, b ,c ,d]
+
+    def get_min_max(self) -> list:
+        a,b,c,d = self.get_corners()
+        min_x = min(a[0], b[0], c[0], d[0])
+        min_y = min(a[1], b[1], c[1], d[1])
+
+        max_x = max(a[0], b[0], c[0], d[0])
+        max_y = max(a[1], b[1], c[1], d[1])
+
+        return [min_x, min_y, max_x, max_y]
+
+    def get_aabb(self) -> list:
+        #axis-aligned bounding box
+        min_x, min_y, max_x, max_y = self.get_min_max()
+        return [[min_x, min_y], [max_x, min_y], [min_x, max_y], [max_x, max_y]]
+
+
+
+
+    def wtf(self, deff) -> list[int, int]:
+        a, b = self.width, self.height
+        alpha = math.radians((self.rotation+deff)%360)
+        coords = (b/2*math.tan(alpha-3*math.pi/2), -b/2)
+        if   (abs(alpha) < math.atan2(b, a)) or (abs(alpha - 2*math.pi) < math.atan2(b, a)):
+            coords = (a/2, a/2*math.tan(alpha))
+        elif (abs(alpha-(math.pi/2)) < math.atan2(a, b)):
+            coords = (-(b/2)*math.tan(alpha-(math.pi/2)), b/2)
+        elif (abs(alpha-math.pi) < math.atan2(b, a)):
+            coords = (-a/2, -a/2*math.tan(alpha-math.pi))
+        elif (abs(alpha-3*math.pi/2) < math.atan2(a, b)):
+            coords = (b/2*math.tan(alpha-3*math.pi/2), -b/2)
+
+        return coords
+
 
     def bounds(self, cx, cy) -> bool:
-        return (self.x <= cx <= self.x + self.width) and (self.y <= cy <= self.y + self.height)
+        def vectorize(p1, p2):
+            return [p2[0]-p1[0], p2[1]-p1[1]]
+
+        a, b, c, _ = self.get_corners()
+
+        AB, AM, BC, BM = vectorize(a, b), vectorize(a, [cx, cy]), vectorize(b, c), vectorize(a, [cx, cy]) 
+
+        return (0 <= np.dot(AB, AM) <= np.dot(AB, AB)) and (0 <= np.dot(BC, BM) <= np.dot(BC, BC))
+
+
 
 
 class Circ(PhysicalObject, shapes.Circle):
-    def __init__(self, draggable=True, movable=True, velocity=[0, 0], acceleration=[0, 0], density=7850 , *args, **kwargs):
+    def __init__(self, movable: bool = True, draggable: bool = True, velocity: list[int, int]=[0, 0], acceleration: list[int, int]=[0, 0], rotation: float=0, density: int=7850, *args, **kwargs):
         shapes.Circle.__init__(self, *args, **kwargs)
-        PhysicalObject.__init__(self, draggable, movable, velocity, acceleration)
+        PhysicalObject.__init__(self, draggable, movable, velocity, acceleration, rotation)
         self.density = density
         self.mass = math.pi * self.radius * self.density
 
@@ -139,11 +196,19 @@ class Sim:
         counter = pyglet.window.FPSDisplay(window=self)
         label = pyglet.text.Label("", color=(122, 122, 122, 255), font_size=36, x=self.width//2, y=self.height//2, anchor_x='center', anchor_y='center')
         cue_line = shapes.Line(0, 0, 0, 0, 0, color = (120, 35, 120, 120), batch = main_batch)
+        j = [shapes.Line(0, 0, 0, 0, color=(252, 82, 22, 255), width=3, batch = main_batch) for i in range(4)]
+        l= Rect(x=200, y=200, width=135, height=280, color=(122, 122, 122, 255), rotation=0)#, angle=42)
+        d= Rect(x=40, y=400, width=85, height=110, color=(122, 122, 122, 255), rotation=0)
+        f=[shapes.Line(l.x, l.y, 0, 0, color = (i*6, i*6, i*6, 255), width=3, batch = main_batch) for i in range(36)]
+        #f=[Circ(x=0, y=0, radius=5, color=(25, 8, 222, 255)) for i in range(4)]
+
         self.sp = {n: v for n, v in vars().items() if n != "self"}
         #print(self.sp)
 
         #self.circle = Circ(x=self.width//2, y=self.height//2, radius=100, color=(50, 225, 30))
-        [Circ(x=randint(100, self.width-100), y=randint(100, self.height-100), radius=randint(5,80), color=(randint(0,255), randint(0,255), randint(0,255), 255), velocity=[randint(-1000,1000), randint(-1000,1000)]) for x in range(randint(2, 10))]
+        #[Circ(x=randint(100, self.width-100), y=randint(100, self.height-100), radius=randint(5,80), color=(randint(0,255), randint(0,255), randint(0,255), 255), velocity=[randint(-1000,1000), randint(-1000,1000)]) for x in range(randint(2, 10))]
+
+
 
     def get_sim_attributes(self):
         sim_attributes = {k: v for k, v in self.__class__.__dict__.items() if not k.startswith('__')}
@@ -151,18 +216,64 @@ class Sim:
 
     # EVENT
     def on_draw(self):
+        a,b,c,d=self.sp["l"].get_aabb()
+        self.sp["j"][0].x, self.sp["j"][0].y = a
+        self.sp["j"][0].x2, self.sp["j"][0].y2 = b
+
+        self.sp["j"][1].x, self.sp["j"][1].y = a
+        self.sp["j"][1].x2, self.sp["j"][1].y2 = c
+
+        self.sp["j"][2].x, self.sp["j"][2].y = b
+        self.sp["j"][2].x2, self.sp["j"][2].y2 = d
+
+        self.sp["j"][3].x, self.sp["j"][3].y = c
+        self.sp["j"][3].x2, self.sp["j"][3].y2 = d
+
+        #a, b, c, d = self.sp["l"].get_corners()
+        #self.sp["f"][0].x, self.sp["f"][0].y = a
+        #self.sp["f"][1].x, self.sp["f"][1].y = b
+        #self.sp["f"][2].x, self.sp["f"][2].y = c
+        #self.sp["f"][3].x, self.sp["f"][3].y = d
+
+        angl = 0
+        for _ in self.sp["f"]:
+            a,b=self.sp["l"].wtf(angl)
+            leng= math.sqrt(a**2 + b**2)
+            _.x = self.sp["l"].x
+            _.y = self.sp["l"].y
+            _.x2 = self.sp["l"].x + leng *math.cos(math.radians(angl)) #1
+            _.y2 = self.sp["l"].y + leng *math.sin(math.radians(angl)) #0
+            angl+=10
+
         self.clear()
         for _ in PhysicalObject.get_movables():
             _.draw()
 
         for _ in self.sp.values():
-            _.draw()
+            if isinstance(_, list):
+                for i in _:
+                    i.draw()
+            else:
+                _.draw()
 
-        self.quadtree.check()
-        self.quad_shape=self.quadtree.get_quadtree_divisions()
-        for _ in self.quad_shape:
-            _.draw()
 
+        #self.quadtree.check()
+        #self.quad_shape=self.quadtree.get_quadtree_divisions()
+        #for _ in self.quad_shape:
+        #    _.draw()
+
+    def touched_reset(self, dt):
+        for shape in PhysicalObject.get_movables():
+            if shape.movable and not (shape == self.drag_object and not self.cue):
+                if isinstance(shape, Rect):
+                    if shape.color != (122, 122, 122, 255):
+                        shape.color = (122, 122, 122, 255)
+                else:
+                    if shape.color != (255,255,100, 255):
+                        self.sp["label"].color = (122, 122, 122, 255)
+
+    def feur(self, dt):
+        self.sp["l"].rotation+=0.1
 
     def update(self, dt):
         if self.cue:
@@ -181,27 +292,58 @@ class Sim:
         for shape in PhysicalObject.get_movables():
             if shape.movable and not (shape == self.drag_object and not self.cue):
 
+                # MOVE
                 shape.acceleration[0] = -shape.velocity[0] * 0.8
                 shape.acceleration[1] = -shape.velocity[1] * 0.8
                 shape.velocity[0] += shape.acceleration[0] * dt
                 shape.velocity[1] += shape.acceleration[1] * dt
 
-                if shape.x + shape.radius >= self.width:
-                    shape.velocity[0] = -shape.velocity[0]
-                    shape.x = self.width - shape.radius
 
-                if shape.x - shape.radius <= 0:
-                    shape.velocity[0] = -shape.velocity[0]
-                    shape.x = shape.radius
+                # ANTI OOB
+                if isinstance(shape, Circ):
+                    if shape.x + shape.radius >= self.width:
+                        shape.velocity[0] = -shape.velocity[0]
+                        shape.x = self.width - shape.radius
 
-                if shape.y + shape.radius >= self.height:
-                    shape.velocity[1] = -shape.velocity[1]
-                    shape.y = self.height - shape.radius
+                    if shape.x - shape.radius <= 0:
+                        shape.velocity[0] = -shape.velocity[0]
+                        shape.x = shape.radius
 
-                if shape.y - shape.radius <= 0:
-                    shape.velocity[1] = -shape.velocity[1]
-                    shape.y = shape.radius
+                    if shape.y + shape.radius >= self.height:
+                        shape.velocity[1] = -shape.velocity[1]
+                        shape.y = self.height - shape.radius
+
+                    if shape.y - shape.radius <= 0:
+                        shape.velocity[1] = -shape.velocity[1]
+                        shape.y = shape.radius
+
+                elif isinstance(shape, Rect):
+                    a, b, c, d = shape.get_aabb()
+
+                    if d[0] >= self.width:
+                        shape.color = (12, 222, 22, 255)
+                        shape.velocity[0] = -shape.velocity[0]
+                        shape.x = self.width - (b[0]-a[0])/2
+
+                    if a[0] <= 0: 
+                        shape.color = (12, 222, 22, 255)
+                        shape.velocity[0] = -shape.velocity[0]
+                        shape.x = (b[0]-a[0])/2
+
+
+                    if d[1] >= self.height:
+                        shape.color = (12, 222, 22, 255)
+                        shape.velocity[1] = -shape.velocity[1]
+                        shape.y = self.height-(d[1]-b[1])/2
+
+                    if a[1] <= 0:
+                        shape.color = (12, 222, 22, 255)
+                        shape.velocity[1] = -shape.velocity[1]
+                        shape.y = (d[1]-b[1])/2
+
  
+
+                # SLOW DOWN
                 shape.x += shape.velocity[0] * dt
                 shape.y += shape.velocity[1] * dt
 
@@ -214,30 +356,63 @@ class Sim:
 
         objects = PhysicalObject.get_movables()
         for shape_a in objects:
-            if shape_a.movable and shape_a.draggable:
-                for shape_b in objects:
-                    if shape_b.movable and shape_b.draggable:# bouze temporaire en attendant l'imple du quadtree
-                        if shape_b != shape_a:
-                            if (shape_a.x-shape_b.x)**2 + (shape_a.y-shape_b.y)**2 <= (shape_a.radius + shape_b.radius)**2: # plus rapide sans la racine carré
-                                distance = math.sqrt((shape_a.x-shape_b.x)**2 + (shape_a.y-shape_b.y)**2) # par contre là on est obligé lol
-                                overlap = distance - shape_a.radius - shape_b.radius
-                                if self.drag_object not in (shape_a, shape_b):
-                                    overlap *= 0.5
-                                else:
-                                    overlap *= 2 # A CHANGER
-
-                                if shape_a != self.drag_object:
-                                    shape_a.x -= overlap * (shape_a.x - shape_b.x) / distance
-                                    shape_a.y -= overlap * (shape_a.y - shape_b.y) / distance
-
-                                if shape_b != self.drag_object:
-                                    shape_b.x -= overlap * (shape_b.x - shape_a.x) / distance
-                                    shape_b.y -= overlap * (shape_b.y - shape_a.y) / distance
-
-                                self.sp["label"].color = (255,255,100, 255)
-                                PhysicalObject.colision(self, shape_a, shape_b)
+            for shape_b in objects:# bouze temporaire en attendant l'imple du quadtree
+                if (shape_b != shape_a) and shape_a.movable and shape_a.draggable and shape_b.movable and shape_b.draggable:
+                    if isinstance(shape_a, Circ) and isinstance(shape_b, Circ):
+                        if (shape_a.x-shape_b.x)**2 + (shape_a.y-shape_b.y)**2 <= (shape_a.radius + shape_b.radius)**2: # plus rapide sans la racine carré
+                            distance = math.sqrt((shape_a.x-shape_b.x)**2 + (shape_a.y-shape_b.y)**2) # par contre là on est obligé lol
+                            overlap = distance - shape_a.radius - shape_b.radius
+                            if self.drag_object not in (shape_a, shape_b):
+                                overlap *= 0.5
                             else:
-                                self.sp["label"].color = (122, 122, 122, 255)
+                                overlap *= 2 # A CHANGER
+
+                            if distance == 0:distance = 1
+
+                            if shape_a != self.drag_object:
+                                shape_a.x -= overlap * (shape_a.x - shape_b.x) / distance
+                                shape_a.y -= overlap * (shape_a.y - shape_b.y) / distance
+
+                            if shape_b != self.drag_object:
+                                shape_b.x -= overlap * (shape_b.x - shape_a.x) / distance
+                                shape_b.y -= overlap * (shape_b.y - shape_a.y) / distance
+
+                            self.sp["label"].color = (255,255,100, 255)
+                            PhysicalObject.colision(self, shape_a, shape_b)
+
+                    if isinstance(shape_a, Rect) and isinstance(shape_b, Rect):
+
+                        def size(p1 , p2): return math.sqrt(((p1[0]-p2[0])**2) + ((p1[1]-p2[1])**2))
+                        def angl(p1, p2):return math.atan2(p1[1]-p2[1], p1[0]-p2[0])
+
+                        # test A
+                        r = [[size([shape_a.x, shape_a.y], i), angl([shape_a.x, shape_a.y], i)] for i in shape_b.get_corners()]
+
+                        for _ in r:
+                            aa = shape_a.wtf(_[1])
+                            d = math.sqrt((aa[0]**2)+(aa[1]**2))
+                            if 0 >= (_[0] - d):
+                                print("feur")
+                                shape_b.velocity[0] = -shape_b.velocity[0]
+                                shape_b.velocity[1] = -shape_b.velocity[1]
+                                shape_a.velocity[0] = -shape_a.velocity[0]
+                                shape_a.velocity[1] = -shape_a.velocity[1] 
+
+                        
+
+
+                        # test B
+                        r = [[size([shape_b.x, shape_b.y], i), angl([shape_b.x, shape_b.y], i)] for i in shape_a.get_corners()]
+
+                        for _ in r:
+                            aa = shape_a.wtf(_[1])
+                            d = math.sqrt((aa[0]**2)+(aa[1]**2))
+                            if 0 >= (_[0] - d):
+                                print("feur")
+                                shape_b.velocity[0] = -shape_b.velocity[0]
+                                shape_b.velocity[1] = -shape_b.velocity[1]
+                                shape_a.velocity[0] = -shape_a.velocity[0]
+                                shape_a.velocity[1] = -shape_a.velocity[1]  
 
 
 class Wind(Sim, Events, pyglet.window.Window):
@@ -250,6 +425,8 @@ class Wind(Sim, Events, pyglet.window.Window):
         Events.__init__(self)
 
         pyglet.clock.schedule_interval(self.update, 1 / 1200.0)
+        pyglet.clock.schedule_interval(self.feur, 1 / 120)
+        pyglet.clock.schedule_interval(self.touched_reset, 1 / 6)
         pyglet.app.run()
 
 
@@ -313,6 +490,8 @@ class QuadTree:
             return x1, y2, half_width, half_height
         elif index == 3:
             return x2, y2, half_width, half_height
+
+
 
 if __name__ == "__main__":
     fsim = Wind(width=800, height=600) # 800 , 600
