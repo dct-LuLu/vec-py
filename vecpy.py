@@ -93,7 +93,7 @@ class Rect(PhysicalObject, shapes.Rectangle):
 
 
 
-    def wtf(self, deff) -> list[int, int]:
+    def wtf(self, deff) -> list[int]:
         a, b = self.width, self.height
         alpha = math.radians((self.rotation+deff)%360)
         coords = (b/2*math.tan(alpha-3*math.pi/2), -b/2)
@@ -201,6 +201,7 @@ class Sim:
         d= Rect(x=40, y=400, width=85, height=110, color=(122, 122, 122, 255), rotation=0)
         f=[shapes.Line(l.x, l.y, 0, 0, color = (i*6, i*6, i*6, 255), width=3, batch = main_batch) for i in range(36)]
         #f=[Circ(x=0, y=0, radius=5, color=(25, 8, 222, 255)) for i in range(4)]
+        u = [[Circ(x=0, y=0, radius=5, color=(122, 100, 12, 255)), shapes.Line(0, 0, 0, 0, color=(122, 100, 12, 255), width=1, batch=main_batch)] for i in range(4)]
 
         self.sp = {n: v for n, v in vars().items() if n != "self"}
         #print(self.sp)
@@ -252,7 +253,11 @@ class Sim:
         for _ in self.sp.values():
             if isinstance(_, list):
                 for i in _:
-                    i.draw()
+                    if isinstance(i, list):
+                        for j in i:
+                            j.draw()
+                    else:
+                        i.draw()
             else:
                 _.draw()
 
@@ -271,6 +276,11 @@ class Sim:
                 else:
                     if shape.color != (255,255,100, 255):
                         self.sp["label"].color = (122, 122, 122, 255)
+
+        for i in self.sp["u"]:
+            for j in i:
+                j.x = 0
+                j.y = 0
 
     def feur(self, dt):
         self.sp["l"].rotation+=0.1
@@ -387,10 +397,15 @@ class Sim:
 
                         # test A
                         r = [[size([shape_a.x, shape_a.y], i), angl([shape_a.x, shape_a.y], i)] for i in shape_b.get_corners()]
-
-                        for _ in r:
+                        print(len(r))
+                        for i, _ in enumerate(r):
                             aa = shape_a.wtf(_[1])
-                            d = math.sqrt((aa[0]**2)+(aa[1]**2))
+                            d = size([shape_a.x, shape_a.y], aa)
+                            self.sp["u"][0][i].x, self.sp["u"][0][i].y = aa
+                            self.sp["u"][1][i].x, self.sp["u"][1][i].y  = shape_a.x, shape_a.y
+                            self.sp["u"][1][i].x2, self.sp["u"][1][i].y2  = shape_b.get_corners()[i]
+
+
                             if 0 >= (_[0] - d):
                                 print("feur")
                                 shape_b.velocity[0] = -shape_b.velocity[0]
@@ -398,7 +413,6 @@ class Sim:
                                 shape_a.velocity[0] = -shape_a.velocity[0]
                                 shape_a.velocity[1] = -shape_a.velocity[1] 
 
-                        
 
 
                         # test B
@@ -406,7 +420,7 @@ class Sim:
 
                         for _ in r:
                             aa = shape_a.wtf(_[1])
-                            d = math.sqrt((aa[0]**2)+(aa[1]**2))
+                            d = size([shape_b.x, shape_b.y], aa)
                             if 0 >= (_[0] - d):
                                 print("feur")
                                 shape_b.velocity[0] = -shape_b.velocity[0]
