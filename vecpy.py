@@ -25,7 +25,7 @@ class PhysicalObject():
     def get_tag(self) -> str:
         return f"{self.__class__.__name__} x: {int(self.x)} y:{int(self.y)} col:{self.color[0], self.color[1], self.color[2]}"
 
-    def colision(self, obj1, obj2):
+    def elastic_colision(self, obj1, obj2):
         obj1.velocity = np.array(obj1.velocity)
         obj2.velocity = np.array(obj2.velocity)
 
@@ -197,11 +197,11 @@ class Sim:
         label = pyglet.text.Label("", color=(122, 122, 122, 255), font_size=36, x=self.width//2, y=self.height//2, anchor_x='center', anchor_y='center')
         cue_line = shapes.Line(0, 0, 0, 0, 0, color = (120, 35, 120, 120), batch = main_batch)
         j = [shapes.Line(0, 0, 0, 0, color=(252, 82, 22, 255), width=3, batch = main_batch) for i in range(4)]
-        l= Rect(x=200, y=200, width=135, height=280, color=(122, 122, 122, 255), rotation=0)#, angle=42)
-        d= Rect(x=40, y=400, width=85, height=110, color=(122, 122, 122, 255), rotation=0)
+        l= Rect(x=200, y=200, width=135, height=280, color=(122, 122, 122, 255), rotation=randint(0, 360))#, angle=42)
+        d= Rect(x=40, y=400, width=90, height=160, color=(122, 122, 122, 255), rotation=randint(0, 360))
         f=[shapes.Line(l.x, l.y, 0, 0, color = (i*6, i*6, i*6, 255), width=3, batch = main_batch) for i in range(36)]
         #f=[Circ(x=0, y=0, radius=5, color=(25, 8, 222, 255)) for i in range(4)]
-        u = [[Circ(x=0, y=0, radius=5, color=(122, 100, 12, 255)), shapes.Line(0, 0, 0, 0, color=(122, 100, 12, 255), width=1, batch=main_batch)] for i in range(4)]
+        u = [[Circ(x=0, y=0, radius=8, color=(10+i*28, 255-i*28, 120, 255), movable=False, draggable=False), shapes.Line(0, 0, 0, 0, color=(10+i*28, 255-i*28, 250, 255), width=3, batch=main_batch)] for i in range(8)]
 
         self.sp = {n: v for n, v in vars().items() if n != "self"}
         #print(self.sp)
@@ -246,20 +246,19 @@ class Sim:
             _.y2 = self.sp["l"].y + leng *math.sin(math.radians(angl)) #0
             angl+=10
 
+
+        def recurse_draw(tab):
+            for _ in tab:
+                if isinstance(_, list):
+                    recurse_draw(_)
+                else:
+                    _.draw()
+        
         self.clear()
         for _ in PhysicalObject.get_movables():
             _.draw()
 
-        for _ in self.sp.values():
-            if isinstance(_, list):
-                for i in _:
-                    if isinstance(i, list):
-                        for j in i:
-                            j.draw()
-                    else:
-                        i.draw()
-            else:
-                _.draw()
+        recurse_draw(self.sp.values())
 
 
         #self.quadtree.check()
@@ -277,10 +276,10 @@ class Sim:
                     if shape.color != (255,255,100, 255):
                         self.sp["label"].color = (122, 122, 122, 255)
 
-        for i in self.sp["u"]:
-            for j in i:
-                j.x = 0
-                j.y = 0
+        #for i in self.sp["u"]:
+        #    for j in i:
+        #        j.x = 0
+        #        j.y = 0
 
     def feur(self, dt):
         self.sp["l"].rotation+=0.1
@@ -331,23 +330,23 @@ class Sim:
                     a, b, c, d = shape.get_aabb()
 
                     if d[0] >= self.width:
-                        shape.color = (12, 222, 22, 255)
+                        shape.color = (122, 222, 22, 255)
                         shape.velocity[0] = -shape.velocity[0]
                         shape.x = self.width - (b[0]-a[0])/2
 
                     if a[0] <= 0: 
-                        shape.color = (12, 222, 22, 255)
+                        shape.color = (122, 222, 22, 255)
                         shape.velocity[0] = -shape.velocity[0]
                         shape.x = (b[0]-a[0])/2
 
 
                     if d[1] >= self.height:
-                        shape.color = (12, 222, 22, 255)
+                        shape.color = (122, 222, 22, 255)
                         shape.velocity[1] = -shape.velocity[1]
                         shape.y = self.height-(d[1]-b[1])/2
 
                     if a[1] <= 0:
-                        shape.color = (12, 222, 22, 255)
+                        shape.color = (122, 222, 22, 255)
                         shape.velocity[1] = -shape.velocity[1]
                         shape.y = (d[1]-b[1])/2
 
@@ -386,47 +385,88 @@ class Sim:
                             if shape_b != self.drag_object:
                                 shape_b.x -= overlap * (shape_b.x - shape_a.x) / distance
                                 shape_b.y -= overlap * (shape_b.y - shape_a.y) / distance
-
+ 
                             self.sp["label"].color = (255,255,100, 255)
-                            PhysicalObject.colision(self, shape_a, shape_b)
+                            PhysicalObject.elastic_colision(self, shape_a, shape_b)
 
                     if isinstance(shape_a, Rect) and isinstance(shape_b, Rect):
 
-                        def size(p1 , p2): return math.sqrt(((p1[0]-p2[0])**2) + ((p1[1]-p2[1])**2))
+                        def fast_fake_size(p1 , p2): return ((p2[0]-p1[0])**2) + ((p2[1]-p1[1])**2)
                         def angl(p1, p2):return math.atan2(p1[1]-p2[1], p1[0]-p2[0])
 
                         # test A
-                        r = [[size([shape_a.x, shape_a.y], i), angl([shape_a.x, shape_a.y], i)] for i in shape_b.get_corners()]
-                        print(len(r))
-                        for i, _ in enumerate(r):
-                            aa = shape_a.wtf(_[1])
-                            d = size([shape_a.x, shape_a.y], aa)
-                            self.sp["u"][0][i].x, self.sp["u"][0][i].y = aa
-                            self.sp["u"][1][i].x, self.sp["u"][1][i].y  = shape_a.x, shape_a.y
-                            self.sp["u"][1][i].x2, self.sp["u"][1][i].y2  = shape_b.get_corners()[i]
-
-
-                            if 0 >= (_[0] - d):
-                                print("feur")
-                                shape_b.velocity[0] = -shape_b.velocity[0]
-                                shape_b.velocity[1] = -shape_b.velocity[1]
-                                shape_a.velocity[0] = -shape_a.velocity[0]
-                                shape_a.velocity[1] = -shape_a.velocity[1] 
+                        #r = [[size([shape_a.x, shape_a.y], i), angl([shape_a.x , shape_a.y], i) + math.radians(180)] for i in shape_b.get_corners()]
+              
+                        
+                        #for i, _ in enumerate(r):
+                        #    aa = shape_a.wtf(math.degrees(_[1]))
+                        #
+                        #    d = size([shape_a.x, shape_a.y], aa)
+                        #    leng = math.sqrt(aa[0]**2 + aa[1]**2)
+                        #
+                        #    #a,b=self.sp["l"].wtf(angl); leng= math.sqrt(a**2 + b**2)
+                        #
+                        #    self.sp["u"][i][0].x, self.sp["u"][i][0].y = shape_a.x + leng *math.cos(r[i][1]), shape_a.y + leng *math.sin(r[i][1])
+                        #    self.sp["u"][i][1].x, self.sp["u"][i][1].y  = shape_a.x, shape_a.y
+                        #    self.sp["u"][i][1].x2, self.sp["u"][i][1].y2  = shape_b.get_corners()[i]
+                        #
+                        #
+                        #    if 0 >= (d-_[0]):# and False:
+                        #        print("feur1")
+                        #        #shape_b.velocity[0] = -shape_b.velocity[0]
+                        #        #shape_b.velocity[1] = -shape_b.velocity[1]
+                        #        #shape_a.velocity[0] = -shape_a.velocity[0]
+                        #        #shape_a.velocity[1] = -shape_a.velocity[1] 
 
 
 
                         # test B
-                        r = [[size([shape_b.x, shape_b.y], i), angl([shape_b.x, shape_b.y], i)] for i in shape_a.get_corners()]
+                        for i in range(4):
+                            angles = shape_a.get_corners()[i] # Les coordonnées des angles du second rectange
+                            phi = angl([shape_b.x, shape_b.y], angles) + math.radians(180) # L'angle (en radians)
+                            surf = shape_b.wtf(math.degrees(phi)%360) # La coordonnée du point projeté sur la surface du premier rectangle en direction du second rectangle PAR RAPPOOOOOOOOOOOORT au centre du premier rectangle
+                            leng = math.sqrt(surf[0]**2 + surf[1]**2) # Trick jsplus d'ou je sors mais ça work
 
-                        for _ in r:
-                            aa = shape_a.wtf(_[1])
-                            d = size([shape_b.x, shape_b.y], aa)
-                            if 0 >= (_[0] - d):
-                                print("feur")
-                                shape_b.velocity[0] = -shape_b.velocity[0]
-                                shape_b.velocity[1] = -shape_b.velocity[1]
-                                shape_a.velocity[0] = -shape_a.velocity[0]
-                                shape_a.velocity[1] = -shape_a.velocity[1]  
+                            self.sp["u"][4+i][0].x, self.sp["u"][4+i][0].y = shape_b.x + leng *math.cos(phi), shape_b.y + leng *math.sin(phi)
+                            self.sp["u"][4+i][1].x, self.sp["u"][4+i][1].y  = shape_b.x, shape_b.y
+                            self.sp["u"][4+i][1].x2, self.sp["u"][4+i][1].y2  = angles
+
+
+                            proj_dist = fast_fake_size([shape_b.x, shape_b.y], [shape_b.x+surf[0], shape_b.y+surf[1]]) # La distance entre le milieu du premier rectangle et le point projeté sur la surface du premier rectangle
+                            ecart_dist = fast_fake_size([shape_b.x, shape_b.y], angles) # La distance entre les angles du second rectangle et le milieu du premier rectangle
+
+
+                            if 0 >= (ecart_dist - proj_dist):
+                                
+                                #overlap = (math.sqrt(ecart_dist) - math.sqrt(proj_dist))
+                                #distance = math.sqrt(proj_dist)
+                                overlap_x = angles[0] - (shape_b.x + leng *math.cos(phi))
+                                overlap_y = angles[1] - (shape_b.y + leng *math.sin(phi))
+                                #shape_a.x -= overlap/2
+                                #shape_a.y -= overlap/2
+
+
+                                #shape_b.x -= -(overlap/2)
+                                #shape_b.y -= -(overlap/2)
+                                print(overlap_x, overlap_y)
+                                PhysicalObject.elastic_colision(self, shape_a, shape_b)
+
+                                # FAIRE UN ANTI OVERLAAAAAAP<
+                                #if shape_a.velocity[0] > 0:
+                                #    shape_a.velocity[0] -= abs(overlap_x/2)
+                                #    shape_b.velocity[0] += abs(overlap_x/2)
+                                #else:
+                                #    shape_a.velocity[0] += abs(overlap_x/2)
+                                #    shape_b.velocity[0] -= abs(overlap_x/2)
+#
+                                #if shape_a.velocity[1] > 0:
+                                #    shape_a.velocity[1] -= abs(overlap_y/2)
+                                #    shape_b.velocity[1] += abs(overlap_y/2)
+                                #else:
+                                #    shape_a.velocity[1] += abs(overlap_y/2)
+                                #    shape_b.velocity[1] -= abs(overlap_y/2)
+
+
 
 
 class Wind(Sim, Events, pyglet.window.Window):
@@ -439,7 +479,7 @@ class Wind(Sim, Events, pyglet.window.Window):
         Events.__init__(self)
 
         pyglet.clock.schedule_interval(self.update, 1 / 1200.0)
-        pyglet.clock.schedule_interval(self.feur, 1 / 120)
+        #pyglet.clock.schedule_interval(self.feur, 1 / 120)
         pyglet.clock.schedule_interval(self.touched_reset, 1 / 6)
         pyglet.app.run()
 
