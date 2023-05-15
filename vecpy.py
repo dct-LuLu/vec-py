@@ -446,65 +446,10 @@ class Wind(Sim, Events, pyglet.window.Window):
 
 
 class QuadTree:
-    __MAX_OBJECTS = 2
     __MAX_LEVELS = 6
     
-    def __init__(self, x, y, width, height, phy_obj=[], level=0):
-        self.x = x
-        self.y = y
-        self.width = width
-        self.height = height
-        self.level = level
-        self.phy_obj = phy_obj
-        self.children = [None] * 4
-        self.rect = Rect(x=x, y=y, width=width, height=height, color=(5*self.level,222,102, 10*self.level), movable=False, draggable=False)
-    
-    def check(self):
-        sub_QuadTree = [[]] * 4
-        half_width, half_height = self.width/2, self.height/2
-        x1, y1 = self.x, self.y
-        x2, y2 = self.x + half_width, self.y + half_height
-        x3, y3 = self.x + self.width, self.y + self.height
-
-        for phy_obj in PhysicalObject.get_movables():
-            if (x1 <= phy_obj.x <= x2) and (y1 <= phy_obj.y <= y2):
-                sub_QuadTree[0].append(phy_obj)
-            elif (x2 <= phy_obj.x <= x3) and (y1 <= phy_obj.y <= y2):
-                sub_QuadTree[1].append(phy_obj)
-            elif (x1 <= phy_obj.x <= x2) and (y2 <= phy_obj.y <= y3):
-                sub_QuadTree[2].append(phy_obj)
-            elif (x2 <= phy_obj.x <= x3) and (y2 <= phy_obj.y <= y3):
-                sub_QuadTree[3].append(phy_obj)
-
-
-        for i, sub_phy_obj in enumerate(sub_QuadTree):
-            if len(sub_phy_obj) >= self.__MAX_OBJECTS and self.level < self.__MAX_LEVELS:
-                self.children[i] = QuadTree(*self.get_sub_quadtree_coords(i), sub_phy_obj, self.level+1)
-                self.children[i].check()
-            else:
-                self.children[i] = None
-
-    def get_quadtree_divisions(self):
-        sub = []
-        for child in self.children:
-            if child is not None:
-                sub.append(self.rect)
-                sub += child.get_quadtree_divisions()
-        return sub
-    
-    def get_sub_quadtree_coords(self, index):
-        half_width, half_height = self.width/2, self.height/2
-        x1, y1 = self.x, self.y
-        x2, y2 = self.x + half_width, self.y + half_height
-        if index == 0:
-            return x1, y1, half_width, half_height
-        elif index == 1:
-            return x2, y1, half_width, half_height
-        elif index == 2:
-            return x1, y2, half_width, half_height
-        elif index == 3:
-            return x2, y2, half_width, half_height
-
+    def __init__(self):
+        pass
 
 
 if __name__ == "__main__":
