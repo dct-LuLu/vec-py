@@ -66,7 +66,7 @@ class PhysicalObject():
         self.acceleration = acceleration
         self.movable = movable
         self.draggable = draggable
-        self.rotation = abs(rotation)%360
+        self.rotation = rotation % 360 # pas sûr que le abs soit utile et risque de créer des bugs; abs(rotation)%360
         PhysicalObject.instances.add(self)
 
     @classmethod
@@ -558,7 +558,7 @@ class Sim:
                 shape.y += shape.velocity[1] * dt
 
                 # FULL STOP
-                if abs(shape.velocity[0]**2 + shape.velocity[1]**2) < 0.01:
+                if shape.velocity[0]**2 + shape.velocity[1]**2 < 0.01:
                     shape.velocity = [0, 0]
 
 
