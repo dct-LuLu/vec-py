@@ -79,6 +79,20 @@ class Util:
         else:
             return 'None' if num is None else 'undefined'
 
-
+    def unique_sets(s: set) -> set:
+        """
+        Returns a set of sets of 2 objects from the input set of objects
+        """
+        r = set()
+        for i in s:
+            for j in s:
+                if i != j:
+                    r.add(frozenset([i, j]))
+        return r
 
     NF = nf5 # alias, base format number
+
+if __name__ == "__main__":
+    o = {1, 2, 3, 4, 5}
+    print(o)
+    print(Util.unique_sets(o))

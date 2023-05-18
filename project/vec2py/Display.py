@@ -18,14 +18,15 @@ class Display(Events, pyglet.window.Window):
         Events.__init__(self)
         self.temp_render_list = [Circ(100, 100, 50, None, (98, 12, 225, 230)), Circ(200, 200, 13, None, (98, 12, 225, 230))]
         #pyglet.clock.schedule_interval(self.grow, 1/40)
-        pyglet.clock.schedule_interval(self.remake, 1)
+        pyglet.clock.schedule_interval(self.remake, 1/40)
         self.collision_detection = CollisionDetection(self.window_width, self.window_height)
         pyglet.app.run()
 
     def remake(self, dt):
-        print("remake")
         self.collision_detection.routine()
         self.quad_render = self.collision_detection.get_debug_lines()
+        if len(CollisionDetection._may_collide) > 0:
+            print("COLLISION")
 
     def on_draw(self):
         self.clear()

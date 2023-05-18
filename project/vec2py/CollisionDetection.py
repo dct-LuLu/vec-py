@@ -12,14 +12,15 @@ from vec2py.util.Vector import Vector
 # TAS
 
 class PolygonMapQuadtree:
+    _may_collide = set()
     def __init__(self):
         #self._root = QuadNode(self._bounds)
         self.routine()
-        self._may_collide = []
         # Faire une liste de sets de deux polygones qui peuvent se toucher
         
 
     def routine(self):
+        PolygonMapQuadtree._may_collide = set()
         self._root = QuadNode(self._bounds)
         for polygon in Entity.get_movables():
             self._root.insert(polygon)
@@ -42,6 +43,7 @@ class QuadNode:
         self._bounds = bounds
         self._childs = [None] * 4 # [ Bottom left // Bottom right // Top right // Top left ]
         self._level = level + 1
+        
 
     def insert(self, polygon: Entity):
         assert isinstance(polygon, Entity), "Inserting entities is only allowed."
@@ -51,9 +53,10 @@ class QuadNode:
                 quad_rect = self._bounds.quadrant(_)
                 if AABB.intersects(quad_rect):
                     if self._level == QuadNode.__MAX_DEPTH:# LEAF NODE
-                        if self._childs[_] is None: self._childs[_] = [polygon]  
+                        if self._childs[_] is None: self._childs[_] = {polygon}
                         elif polygon not in self._childs[_]:
-                            self._childs[_].append(polygon)
+                            self._childs[_].add(polygon)
+                            PolygonMapQuadtree._may_collide.add(frozenset([*self._childs[_]]))
 
                     else:# BRANCH NODE
                         if self._childs[_] is None: self._childs[_] = QuadNode(quad_rect, self._level)
