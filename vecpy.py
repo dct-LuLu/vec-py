@@ -248,20 +248,6 @@ class Rect(PhysicalObject, shapes.Rectangle):
         other.x -= overlap_x * 2
         other.y -= overlap_y * 2
 
-        # FAIRE UN ANTI OVERLAAAAAAP< DIGNE DE CE NOM
-        # if other.velocity[0] > 0:
-        #     other.velocity[0] -= abs(overlap_x)
-        #     self.velocity[0] += abs(overlap_x)
-        # elif other.velocity[0] < 0:
-        #     other.velocity[0] += abs(overlap_x)
-        #     self.velocity[0] -= abs(overlap_x)
-        # if other.velocity[1] > 0:
-        #     other.velocity[1] += abs(overlap_y)
-        #     self.velocity[1] -= abs(overlap_y)
-        # elif other.velocity[1] < 0:
-        #     other.velocity[1] -= abs(overlap_y)
-        #     self.velocity[1] += abs(overlap_y)
-
 
     def restrain(self):
         """Restrain the rectangle inside the window"""
