@@ -375,7 +375,7 @@ class Events:
         if (buttons & mouse.LEFT) and self.drag_object is not None:
             self.drag_object.x += dx
             self.drag_object.y += dy
-            self.drag_object.velocity = [dx*100, dy*100]
+            self.drag_object.velocity = [0, 0] #[dx*100, dy*100]
 
         if (buttons & mouse.RIGHT) and self.cue_object is not None:
             self.cursorpos = [x, y]
@@ -557,15 +557,134 @@ class Sim:
             self.sp["label"].text = f"nb: {feur} x: {int(self.target.x)} y:{int(self.target.y)} dx:{int(self.target.velocity[0])} dy:{int(self.target.velocity[1])}" # label de debug
 
         objects = PhysicalObject.get_movables()
-        for shape_a in objects:
-            for shape_b in objects:# bouze temporaire en attendant l'imple du quadtree
-                if (shape_b != shape_a) and shape_a.movable and shape_a.draggable and shape_b.movable and shape_b.draggable:
-                    if type(shape_a) == type(shape_b):#nesting de if pour de meilleures perfs (oui oui)
-                        if shape_a.collision_check(shape_b):
-                            shape_a.anti_overlap(shape_b)
-                            self.sp["label"].color = (255,255,100, 255)
-                            PhysicalObject.elastic_colision(self, shape_a, shape_b) 
 
+        for i in range(len(objects)):
+            shape_a = objects[i]
+            for shape_b in objects[i + 1:]:
+                if shape_a.movable and shape_a.draggable and shape_b.movable and shape_b.draggable:
+                    if type(shape_a) == type(shape_b):#nesting de if pour de meilleures perfs (oui oui)
+                        result = collisionSATWithAntiOverlap(shape_a, shape_b)
+
+                        if result != None:
+                            shape_a.x += result.getX()
+                            shape_a.y += result.getY()
+                            PhysicalObject.elastic_colision(self, shape_a, shape_b)
+
+
+
+                        # if shape_a.collision_check(shape_b):
+                        #     shape_a.anti_overlap(shape_b)
+                        #     self.sp["label"].color = (255,255,100, 255)
+                        #     PhysicalObject.elastic_colision(self, shape_a, shape_b) 
+
+import os, sys
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), 'project')))
+
+from project.vec2py.util.Vector import Vector
+
+def get_axes(rect: Rect):
+    axes = []
+
+    corners = rect.get_corners()
+
+    for i in range(2):
+        j = 0 if i == 3 else i + 1
+        normal = (Vector(corners[i][0], corners[i][1]) - Vector(corners[j][0], corners[j][1])).getNormal().normalize()
+
+        axes.append(normal)
+
+    return axes
+
+class Projection:
+    def __init__(self, min, max):
+        self.min = min
+        self.max = max
+
+    def overlap(self, other):
+        return self.min < other.max and other.min < self.max
+
+    def getOverlap(self, other):
+        return min(self.max, other.max) - max(self.min, other.min)
+
+    def __str__(self):
+        return f'min: {str(self.min)}; max: {str(self.max)}'
+
+def projectShapeOntoAxis(shape: Rect, axis: Vector):
+    vertices = shape.get_corners()
+
+    min = axis.dotProduct(Vector(vertices[0][0], vertices[0][1]))
+    max = min
+
+    for vertice in vertices[1:]:
+        p = axis.dotProduct(Vector(vertice[0], vertice[1]))
+
+        if p < min:
+            min = p
+        elif p > max:
+            max = p
+
+    return Projection(min, max)
+
+def collisionSAT(shape_a: Rect, shape_b: Rect):
+    axes_a = get_axes(shape_a)
+    axes_b = get_axes(shape_b)
+
+    for axis in axes_a:
+        p1 = projectShapeOntoAxis(shape_a, axis)
+        p2 = projectShapeOntoAxis(shape_b, axis)
+
+        if not p1.overlap(p2):
+            return False
+
+    for axis in axes_b:
+        p1 = projectShapeOntoAxis(shape_a, axis)
+        p2 = projectShapeOntoAxis(shape_b, axis)
+
+        if not p1.overlap(p2):
+            return False
+
+    return True
+
+def collisionSATWithAntiOverlap(shape_a: Rect, shape_b: Rect):
+    overlap = 10**6
+    smallest = None
+    axes_a = get_axes(shape_a)
+    axes_b = get_axes(shape_b)
+
+    for axis in axes_a:
+        p1 = projectShapeOntoAxis(shape_a, axis)
+        p2 = projectShapeOntoAxis(shape_b, axis)
+
+        if not p1.overlap(p2):
+            return None
+        else:
+            o = p1.getOverlap(p2);
+
+            if (o < overlap):
+                overlap = o
+                smallest = axis
+
+    for axis in axes_b:
+        p1 = projectShapeOntoAxis(shape_a, axis)
+        p2 = projectShapeOntoAxis(shape_b, axis)
+
+        if not p1.overlap(p2):
+            return None
+        else:
+            o = p1.getOverlap(p2);
+
+            if (o < overlap):
+                overlap = o
+                smallest = axis
+
+    overlap = smallest.multiply(overlap)
+
+    dir = Vector(shape_b.x - shape_a.x, shape_b.y - shape_a.y)
+
+    if (overlap.dotProduct(dir) > 0):
+        overlap = overlap.multiply(-1)
+
+    return overlap
 
 class Wind(Sim, Events, pyglet.window.Window):
     def __init__(self, *args, **kwargs):    
@@ -576,35 +695,10 @@ class Wind(Sim, Events, pyglet.window.Window):
         Sim.__init__(self)
         Events.__init__(self)
 
-        pyglet.clock.schedule_interval(self.update, 1 / 1200.0)
+        pyglet.clock.schedule_interval(self.update, 1 / 60.0)
         #pyglet.clock.schedule_interval(self.rotat, 1 / 120)
         pyglet.clock.schedule_interval(self.touched_reset, 1 / 6)
         pyglet.app.run()
-
-
-
-class QuadTree:
-    __MAX_LEVELS = 6
-    # Mettez en cache les nœuds: Lorsque vous construisez le Quadtree, stockez les nœuds créés dans une liste ou un dictionnaire.
-    # Lorsque vous mettez à jour le Quadtree, utilisez les nœuds précédemment créés plutôt que de les recréer à chaque fois.
-
-    # Utilisez des méthodes d'insertion et de suppression: Si vous devez insérer ou supprimer des objets du Quadtree à chaque update,
-    # créez des méthodes spécifiques pour effectuer ces opérations plutôt que de reconstruire l'arbre à chaque fois. Cela permettra de minimiser le nombre de nœuds à créer ou à supprimer.
-
-    # Utilisez un système de marquage: Plutôt que de supprimer des objets du Quadtree lorsqu'ils ne sont plus nécessaires, marquez-les comme étant supprimés.
-    # Lors de la reconstruction du Quadtree, ignorez les objets marqués pour améliorer les performances.
-
-    # Évitez les subdivisions inutiles: Si les objets dans votre Quadtree ne se déplacent pas beaucoup, vous pouvez limiter le nombre de subdivisions en vérifiant si un nœud a suffisamment d'objets avant de le diviser.
-    # De même, si un nœud n'a plus d'objets, vous pouvez fusionner ses enfants.
-
-    # Utilisez un pool d'objets: Si vous avez besoin de créer ou de supprimer de nombreux objets à chaque update, utilisez un pool d'objets pour éviter de créer et de supprimer des objets à chaque fois.
-    # Au lieu de cela, vous pouvez simplement réutiliser des objets existants à partir du pool.
-
-    #En général, l'objectif est de minimiser le nombre d'opérations coûteuses à chaque update. En utilisant ces techniques, vous pouvez améliorer les performances de votre Quadtree et le rendre plus adapté
-    # à la gestion d'un grand nombre d'objets.
-    
-    def __init__(self):
-        pass
 
 
 if __name__ == "__main__":

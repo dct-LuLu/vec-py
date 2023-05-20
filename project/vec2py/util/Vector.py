@@ -25,6 +25,13 @@ class Vector:
         """
         return self._y
 
+    def getNormal(self):
+        return Vector(-self._y, self._x)
+
+    def normalize(self):
+        norm = sqrt(self._x**2 + self._y**2)
+        return Vector(self._x / norm, self._y / norm)
+
     def angleTo(self, other: "Vector") -> float:
         """
         Returns the angle between this vector and the other vector, in radians; positive means counterclockwise
