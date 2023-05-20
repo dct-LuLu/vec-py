@@ -1,6 +1,8 @@
 from vec2py.entities.Entity import Entity
 from vec2py.util.DoubleRect import DoubleRect
 from vec2py.util.Vector import Vector
+from vec2py.util.Util import Util
+from pyglet import shapes
 
 
 # Implementer les trois différentes types de collisions handler
@@ -13,6 +15,7 @@ from vec2py.util.Vector import Vector
 
 class PolygonMapQuadtree:
     _may_collide = set()
+    _fun = set()
     def __init__(self):
         #self._root = QuadNode(self._bounds)
         self.routine()
@@ -21,6 +24,7 @@ class PolygonMapQuadtree:
 
     def routine(self):
         PolygonMapQuadtree._may_collide = set()
+        PolygonMapQuadtree._fun = set()
         self._root = QuadNode(self._bounds)
         for polygon in Entity.get_movables():
             self._root.insert(polygon)
@@ -44,6 +48,8 @@ class QuadNode:
         self._childs = [None] * 4 # [ Bottom left // Bottom right // Top right // Top left ]
         self._level = level + 1
         
+    def get_rect(self, color = (85, 99, 25, 128)):
+        return shapes.Rectangle(self._bounds.getLeft(), self._bounds.getBottom(), self._bounds.getWidth(), self._bounds.getHeight(), color=color)
 
     def insert(self, polygon: Entity):
         assert isinstance(polygon, Entity), "Inserting entities is only allowed."
@@ -53,10 +59,14 @@ class QuadNode:
                 quad_rect = self._bounds.quadrant(_)
                 if AABB.intersects(quad_rect):
                     if self._level == QuadNode.__MAX_DEPTH:# LEAF NODE
-                        if self._childs[_] is None: self._childs[_] = {polygon}
+                        if self._childs[_] is None: 
+                            self._childs[_] = {polygon}
+                            if Util.DEBUG:
+                                PolygonMapQuadtree._fun.add(self.get_rect())
                         elif polygon not in self._childs[_]:
                             self._childs[_].add(polygon)
                             PolygonMapQuadtree._may_collide.add(frozenset([*self._childs[_]]))
+                            PolygonMapQuadtree._fun.add(self.get_rect((217, 45, 78, 128)))
 
                     else:# BRANCH NODE
                         if self._childs[_] is None: self._childs[_] = QuadNode(quad_rect, self._level)
