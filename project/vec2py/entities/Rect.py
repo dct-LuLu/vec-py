@@ -6,9 +6,10 @@ from math import pi, cos, sin, radians
 from pyglet import shapes
 
 class Rect(Entity, shapes.Rectangle):
-    def __init__(self, x, y, width, height, color=(255, 255, 255, 255)):
+    def __init__(self, x, y, width, height, rotation=0, color=(255, 255, 255, 255)):
         shapes.Rectangle.__init__(self, x, y, width, height, color)
         Entity.__init__(self)
+        self.rotation = rotation
         self.anchor_position = (width / 2, height / 2)
         self.needUpdate = True
 
@@ -17,14 +18,14 @@ class Rect(Entity, shapes.Rectangle):
         super().draw()
         self.needUpdate = True
 
-    def get_corners(self):
+    def get_corners(self) -> tuple[Vector, Vector]:
         r = radians(self.rotation)
 
         width = self.width / 2
         height = self.height / 2
 
         cosr = cos(r)
-        sinr = sin(r)
+        sinr = -sin(r)
 
         a = Vector(self.x + (-width * cosr - -height * sinr), self.y + (-width * sinr + -height * cosr))
         b = Vector(self.x + (-width * cosr -  height * sinr), self.y + (-width * sinr +  height * cosr))
@@ -56,3 +57,8 @@ class Rect(Entity, shapes.Rectangle):
     def is_inside(self, point: Vector):
         return self.x - self.width / 2 < point.getX() and self.x + self.width / 2 > point.getX() \
             and self.y - self.height / 2 < point.getY() and self.y + self.height / 2 > point.getY()
+
+    # def get_axesSAT(self) -> list[Vector]:
+    #     corners = self.get_corners()
+    #     return [(corners[1] - corners[0]).getNormal().normalize(),
+    #             (corners[2] - corners[1]).getNormal().normalize()]

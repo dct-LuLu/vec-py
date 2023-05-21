@@ -85,3 +85,95 @@ class CollisionDetection(PolygonMapQuadtree):
         if type == "quadtree":
             PolygonMapQuadtree.__init__(self)
 
+
+class CollisionSAT:
+    @staticmethod
+    def collisionSATWithAntiOverlap(shape_a: Entity, shape_b: Entity):
+        overlap = 10**6
+        smallest = None
+        axes_a = shape_a.get_axesSAT()
+        axes_b = shape_b.get_axesSAT()
+
+        for axis in axes_a:
+            p1 = CollisionSAT.projectShapeOntoAxis(shape_a, axis)
+            p2 = CollisionSAT.projectShapeOntoAxis(shape_b, axis)
+
+            if not p1.overlap(p2):
+                return None
+            else:
+                o = p1.getOverlap(p2);
+
+                if (o < overlap):
+                    overlap = o
+                    smallest = axis
+
+        for axis in axes_b:
+            p1 = CollisionSAT.projectShapeOntoAxis(shape_a, axis)
+            p2 = CollisionSAT.projectShapeOntoAxis(shape_b, axis)
+
+            if not p1.overlap(p2):
+                return None
+            else:
+                o = p1.getOverlap(p2);
+
+                if (o < overlap):
+                    overlap = o
+                    smallest = axis
+
+        overlap = smallest.multiply(overlap)
+
+        dir = Vector(shape_b.x - shape_a.x, shape_b.y - shape_a.y)
+
+        if (overlap.dotProduct(dir) > 0):
+            overlap = overlap.multiply(-1)
+
+        return overlap
+
+    @staticmethod
+    def collisionSAT(shape_a: Entity, shape_b: Entity):
+        axes_a = shape_a.get_axesSAT()
+        axes_b = shape_b.get_axesSAT()
+
+        for axis in axes_a:
+            p1 = CollisionSAT.projectShapeOntoAxis(shape_a, axis)
+            p2 = CollisionSAT.projectShapeOntoAxis(shape_b, axis)
+
+            if not p1.overlap(p2):
+                return False
+
+        for axis in axes_b:
+            p1 = CollisionSAT.projectShapeOntoAxis(shape_a, axis)
+            p2 = CollisionSAT.projectShapeOntoAxis(shape_b, axis)
+
+            if not p1.overlap(p2):
+                return False
+
+        return True
+
+    @staticmethod
+    def projectShapeOntoAxis(shape: Entity, axis: Vector):
+        vertices = shape.get_corners()
+
+        min = axis.dotProduct(vertices[0])
+        max = min
+
+        for vertice in vertices[1:]:
+            p = axis.dotProduct(vertice)
+
+            if p < min:
+                min = p
+            elif p > max:
+                max = p
+
+        return Projection(min, max)
+
+class Projection:
+    def __init__(self, min, max):
+        self.min = min
+        self.max = max
+
+    def overlap(self, other):
+        return self.min < other.max and other.min < self.max
+
+    def getOverlap(self, other):
+        return min(self.max, other.max) - max(self.min, other.min)

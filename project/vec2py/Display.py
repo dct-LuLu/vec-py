@@ -5,7 +5,7 @@ from pyglet import shapes
 from vec2py.Events import Events
 from vec2py.entities.Circ import Circ
 from vec2py.entities.Rect import Rect
-from vec2py.CollisionDetection import CollisionDetection
+from vec2py.CollisionDetection import CollisionDetection, CollisionSAT
 
 
 
@@ -18,10 +18,10 @@ class Display(Events, pyglet.window.Window):
         
         Events.__init__(self)
         # self.temp_render_list = [Circ(100, 100, 50, None, (98, 12, 225, 230)), Circ(200, 200, 13, None, (98, 12, 225, 230))]
-        self.temp_render_list = [Rect(400, 300, 150, 100)]
+        self.temp_render_list = [Rect(400, 300, 150, 100, 15), Rect(150, 250, 100, 25, 30)]
         #pyglet.clock.schedule_interval(self.grow, 1/40)
 
-        pyglet.clock.schedule_interval(self.remake, 1/40)
+        pyglet.clock.schedule_interval(self.remake, 1 / 60.0)
         #pyglet.clock.schedule_interval(self.simul, 1/600)
         self.collision_detection = CollisionDetection(self.window_width, self.window_height)
        
@@ -57,7 +57,8 @@ class Display(Events, pyglet.window.Window):
         self.collision_detection.routine()
         self.quad_render = self.collision_detection.get_debug_lines()
         if len(CollisionDetection._may_collide) > 0:
-            print("COLLISION")
+            if CollisionSAT.collisionSAT(self.temp_render_list[0], self.temp_render_list[1]):
+                print('collision')
 
     def on_draw(self):
         self.clear()
@@ -69,7 +70,6 @@ class Display(Events, pyglet.window.Window):
         self.temp_render_list[0].radius += 1
         print(self.temp_render_list[0].get_pos())
         print(self.temp_render_list[0].get_AABB())
-        
 
 
 if __name__ == "__main__":

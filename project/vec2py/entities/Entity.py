@@ -1,3 +1,8 @@
+from vec2py.util.Vector import Vector
+from vec2py.util.DoubleRect import DoubleRect
+
+import inspect
+
 class Entity:
     instances: set = set()
 
@@ -9,7 +14,7 @@ class Entity:
 
         self._y_velocity = y_velocity
         self._y_acceleration = (force / self._mass) # L'accélération de l'entité
-        
+
         self._angular_velocity = angular_velocity # Jamais négatif et jamais supérieur à 360
         self._angular_acceleration = 0 # L'accélération angulaire de l'entité
 
@@ -35,10 +40,16 @@ class Entity:
     def x_velocity(self):
         """The x velocity of the entity."""
         return self._x_velocity
-    
+
     @x_velocity.setter
     def x_velocity(self, value):
         self._x_velocity = value
-        
 
-    
+    def get_AABB(self) -> DoubleRect:
+        raise Exception(f'{inspect.stack()[0][3]}() is not implemented for the class: {self.__class__} ')
+
+    def get_axesSAT(self) -> list[Vector]:
+        raise Exception(f'{inspect.stack()[0][3]}() is not implemented for the class: {self.__class__} ')
+
+    def get_corners(self) -> tuple[Vector, Vector]:
+        raise Exception(f'{inspect.stack()[0][3]}() is not implemented for the class: {self.__class__} ')
