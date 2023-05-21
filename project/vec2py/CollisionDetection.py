@@ -84,12 +84,12 @@ class QuadNode:
 
     def insert(self, polygon: Entity):
         assert isinstance(polygon, Entity), "Inserting entities is only allowed."
-        if self._level <= PolygonMapQuadtree.__MAX_DEPTH:
+        if self._level <= QuadNode.__MAX_DEPTH:
             AABB = polygon.get_AABB()
             for _ in range(4):
                 quad_rect = self._bounds.quadrant(_)
                 if AABB.intersects(quad_rect):
-                    if self._level == PolygonMapQuadtree.__MAX_DEPTH:# LEAF NODE
+                    if self._level == QuadNode.__MAX_DEPTH:# LEAF NODE
                         if self._childs[_] is None: 
                             self._childs[_] = {polygon}
                             if Util.DEBUG:

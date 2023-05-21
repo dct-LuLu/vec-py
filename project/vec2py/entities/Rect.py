@@ -58,7 +58,7 @@ class Rect(Entity, shapes.Rectangle):
         return self.x - self.width / 2 < point.getX() and self.x + self.width / 2 > point.getX() \
             and self.y - self.height / 2 < point.getY() and self.y + self.height / 2 > point.getY()
 
-    # def get_axesSAT(self) -> list[Vector]:
-    #     corners = self.get_corners()
-    #     return [(corners[1] - corners[0]).getNormal().normalize(),
-    #             (corners[2] - corners[1]).getNormal().normalize()]
+    def get_axesSAT(self) -> list[Vector]:
+        corners = self.get_corners()
+        return [(corners[1] - corners[0]).getNormal().normalize(),
+                (corners[2] - corners[1]).getNormal().normalize()]
