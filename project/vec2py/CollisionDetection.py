@@ -14,12 +14,43 @@ from pyglet import shapes
 # TAS
 
 class PolygonMapQuadtree:
+    _MAX_DEPTH = 6 #5461
     _may_collide = set()
     _fun = set()
     def __init__(self):
         #self._root = QuadNode(self._bounds)
         self.routine()
         # Faire une liste de sets de deux polygones qui peuvent se toucher
+        self._PRE_CACHED_BOUNDS = {}
+        self.precache(self._bounds)
+        print(self._PRE_CACHED_BOUNDS)
+
+    def get_nb_nodes(self, depth = _MAX_DEPTH):
+        return int(((4**(depth + 1) - 1) / 3)-1)
+
+
+    def precache(self, bounds: DoubleRect):
+        nb = self.get_nb_nodes()//4
+        for _ in range(4):
+            self._PRE_CACHED_BOUNDS[_*nb] = bounds.quadrant(_)
+        print(self._PRE_CACHED_BOUNDS)
+        
+        #for _ in range(self.get_nb_nodes()): self._PRE_CACHED_BOUNDS[_] = self._PRE_CACHED_BOUNDS[_].quadrant(_)
+
+    @staticmethod
+    def get_sequence(n):
+        tab = []
+        for i in range(PolygonMapQuadtree._MAX_DEPTH - 1):
+            calcul = int((4**(PolygonMapQuadtree._MAX_DEPTH - i) - 1) / 3)
+
+            tab.append(n // calcul)
+
+            if n % calcul == 0:
+                break
+
+            n = n % calcul - 1
+        else:
+            tab.append(n)
         
 
     def routine(self):
@@ -53,12 +84,12 @@ class QuadNode:
 
     def insert(self, polygon: Entity):
         assert isinstance(polygon, Entity), "Inserting entities is only allowed."
-        if self._level <= QuadNode.__MAX_DEPTH:
+        if self._level <= PolygonMapQuadtree.__MAX_DEPTH:
             AABB = polygon.get_AABB()
             for _ in range(4):
                 quad_rect = self._bounds.quadrant(_)
                 if AABB.intersects(quad_rect):
-                    if self._level == QuadNode.__MAX_DEPTH:# LEAF NODE
+                    if self._level == PolygonMapQuadtree.__MAX_DEPTH:# LEAF NODE
                         if self._childs[_] is None: 
                             self._childs[_] = {polygon}
                             if Util.DEBUG:
