@@ -4,6 +4,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from pyglet import shapes
 from vec2py.Events import Events
 from vec2py.entities.Circ import Circ
+from vec2py.entities.Rect import Rect
 from vec2py.CollisionDetection import CollisionDetection
 
 
@@ -16,7 +17,8 @@ class Display(Events, pyglet.window.Window):
         self.quad_render = []
         
         Events.__init__(self)
-        self.temp_render_list = [Circ(100, 100, 50, None, (98, 12, 225, 230)), Circ(200, 200, 13, None, (98, 12, 225, 230))]
+        # self.temp_render_list = [Circ(100, 100, 50, None, (98, 12, 225, 230)), Circ(200, 200, 13, None, (98, 12, 225, 230))]
+        self.temp_render_list = [Rect(400, 300, 150, 100)]
         #pyglet.clock.schedule_interval(self.grow, 1/40)
 
         pyglet.clock.schedule_interval(self.remake, 1/40)
