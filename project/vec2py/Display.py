@@ -6,6 +6,7 @@ from vec2py.Events import Events
 from vec2py.entities.Circ import Circ
 from vec2py.entities.Rect import Rect
 from vec2py.CollisionDetection import CollisionDetection, CollisionSAT
+from vec2py.util import DoubleRect
 
 
 
@@ -28,8 +29,8 @@ class Display(Events, pyglet.window.Window):
         pyglet.app.run()
 
     def simul(self, dt):
-        dt *= 10
         force = 10
+        dt *= force
         for i in self.temp_render_list:
             if i != self.drag_object:
                 i._x_velocity += i._x_acceleration * dt
@@ -38,8 +39,7 @@ class Display(Events, pyglet.window.Window):
                 i.x += i._x_velocity * dt
                 i.y += i._y_velocity * dt
 
-                #if i.x <= 0 or i.x >= self.window_width:
-                    #i._x_velocity *= -1
+                #if i.x <= 0 or i.x >= self.window_width: i._x_velocity *= -1
 
                 if i.y <= 0 or i.y >= self.window_height:
                     i._y_velocity *= -1
