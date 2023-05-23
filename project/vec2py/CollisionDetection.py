@@ -11,36 +11,29 @@ from pyglet import shapes
 # https://www.cs.umd.edu/~meesh/cmsc420/ContentBook/FormalNotes/PMQuadtree/pm_quadtree_samet.pdf
 
 # Grid Hierarchy
-# TAS
+# TASDisplay
 
 class PolygonMapQuadtree:
     _MAX_DEPTH = 6 #5461
+    _MAX_NODES = int((4**(_MAX_DEPTH + 1) - 1) / 3)
     _may_collide = set()
     _fun = set()
     _PRE_CACHED_BOUNDS = {}
-    def __init__(self):
-        #self._root = QuadNode(self._bounds)
-        self.__precache(PolygonMapQuadtree._get_nb_nodes())
+    def __init__(self, window_width, window_height):
+        self.window_width = window_width
+        self.window_height = window_height
+        PolygonMapQuadtree._PRE_CACHED_BOUNDS["ROOT"] = DoubleRect.make(Vector(0, 0), Vector(self.window_width, self.window_height))
+        self.__precache(PolygonMapQuadtree._MAX_NODES)
         assert 22 == self.get_number(self.get_sequence(22))
-        #print(PolygonMapQuadtree._PRE_CACHED_BOUNDS.keys())
-        print(len(PolygonMapQuadtree._PRE_CACHED_BOUNDS.keys()))
         self.routine()
-        # Faire une liste de sets de deux polygones qui peuvent se toucher
-
-    @staticmethod
-    def _get_nb_nodes(depth = _MAX_DEPTH):
-        return int((4**(depth + 1) - 1) / 3)
 
 
-    def __precache(self, stage:int, upper:int=None):
+    def __precache(self, stage:int, upper:int="ROOT"):
         stage = int((stage-1)//4)
         if stage >= 1:
-            if upper is None:
-                bounds = self._bounds
-            else:
-                bounds = PolygonMapQuadtree._PRE_CACHED_BOUNDS[upper]
+            bounds = PolygonMapQuadtree._PRE_CACHED_BOUNDS[upper]
             for _ in range(4):
-                if upper is None:
+                if upper == "ROOT":
                     next_upper = _*stage
                 else:
                     next_upper = (upper+1) + _*stage
@@ -74,66 +67,62 @@ class PolygonMapQuadtree:
     def routine(self):
         PolygonMapQuadtree._may_collide = set()
         PolygonMapQuadtree._fun = set()
-        self._root = QuadNode()
+        self._root = QuadNode(PolygonMapQuadtree._MAX_NODES)
         for polygon in Entity.get_movables():
             self._root.insert(polygon)
 
     def get_debug_lines(self, a = None):
         r = []
         a = self._root if a is None else a
-        r.append(a._bounds.get_horizontal_line())
-        r.append(a._bounds.get_vertical_line())
+        r.append(a.get_bounds().get_horizontal_line())
+        r.append(a.get_bounds().get_vertical_line())
         g = []
         for _ in range(4):
-            if a._childs[_] is not None and a._childs[_]._level < 6:
+            if a._childs[_] is not None and a._childs[_]._stage > 1: #agagag?
                 g += self.get_debug_lines(a._childs[_])
         return r + g
 
 
 class QuadNode:
-    def __init__(self, num:int=None, level:int = None):
-        self._num = num
+    def __init__(self, stage:int, num:int="ROOT"):
         self._childs = [None] * 4 # [ Bottom left // Bottom right // Top right // Top left ]
-        self._level = int((level-1)//4) if level is not None else PolygonMapQuadtree._get_nb_nodes()
+        self._stage = int((stage-1)//4)
+        self._num = num
 
     def get_bounds(self):
-        if self._num is None:
-            return self._window_bounds
-        else:
-            return PolygonMapQuadtree._PRE_CACHED_BOUNDS[self._num]
-
+        return PolygonMapQuadtree._PRE_CACHED_BOUNDS[self._num]
         
     def get_rect(self, color = (85, 99, 25, 128)):
-        return shapes.Rectangle(self.get_bounds().getLeft(), self.get_bounds().getBottom(), self.get_bounds().getWidth(), self.get_bounds().getHeight(), color=color)
+        bounds = self.get_bounds()
+        return shapes.Rectangle(bounds.getLeft(), bounds.getBottom(), bounds.getWidth(), bounds.getHeight(), color=color)
     
     def get_child_num(self, i):
-        if self._level >= 1:
-            if self._num is None:
-                match i:
-                    case 0: return 0
-                    case 1: return self._level
-                    case 2: return self._level*2
-                    case 3: return self._level*3
-            else:
-                match i:
-                    case 0: return (self._num+1)
-                    case 1: return (self._num+1) + self._level
-                    case 2: return (self._num+1) + self._level*2
-                    case 3: return (self._num+1) + self._level*3
+        if self._num == "ROOT":
+            match i:
+                case 0: return 0
+                case 1: return self._stage
+                case 2: return self._stage *2   
+                case 3: return self._stage *3
+        else:
+            match i:
+                case 0: return (self._num + 1)
+                case 1: return (self._num + 1) + self._stage
+                case 2: return (self._num + 1) + 2*self._stage
+                case 3: return (self._num + 1) + 3*self._stage
+
     
     def get_child_bounds(self, i):
-        if self._level >= 1:
-            print(self.get_child_num(i), self._level, self._num, i)
-            return PolygonMapQuadtree._PRE_CACHED_BOUNDS[self.get_child_num(i)]
+        assert 0 <= i <= 3, "i must be between 0 and 3"
+        return PolygonMapQuadtree._PRE_CACHED_BOUNDS[self.get_child_num(i)]
 
     def insert(self, polygon: Entity):
         assert isinstance(polygon, Entity), "Inserting entities is only allowed."
-        if self._level >= 1:
+        if self._stage >= 1:
             AABB = polygon.get_AABB()
             for _ in range(4):
                 quadrants_bounds = self.get_child_bounds(_)
                 if AABB.intersects(quadrants_bounds):
-                    if self._level == 1:# LEAF NODE
+                    if self._stage == 1:# LEAF NODE
                         if self._childs[_] is None: 
                             self._childs[_] = {polygon}
                             if Util.DEBUG:
@@ -141,10 +130,11 @@ class QuadNode:
                         elif polygon not in self._childs[_]:
                             self._childs[_].add(polygon)
                             PolygonMapQuadtree._may_collide.add(frozenset([*self._childs[_]]))
-                            PolygonMapQuadtree._fun.add(self.get_rect((217, 45, 78, 128)))
+                            if Util.DEBUG:
+                                PolygonMapQuadtree._fun.add(self.get_rect((217, 45, 78, 128)))
 
                     else:# BRANCH NODE
-                        if self._childs[_] is None: self._childs[_] = QuadNode(self.get_child_num(_), self._level)
+                        if self._childs[_] is None: self._childs[_] = QuadNode(self._stage, self.get_child_num(_))
                         self._childs[_].insert(polygon)
 
 
@@ -156,9 +146,10 @@ class QuadNode:
 
 class CollisionDetection(PolygonMapQuadtree):
     def __init__(self, width, height, type = "quadtree"):
-        self._bounds = DoubleRect.make(Vector(0, 0), Vector(width, height))
+        self.window_width = width
+        self.window_height = height
         if type == "quadtree":
-            PolygonMapQuadtree.__init__(self)
+            PolygonMapQuadtree.__init__(self, width, height)
 
 
 class CollisionSAT:

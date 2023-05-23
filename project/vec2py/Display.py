@@ -7,6 +7,8 @@ from vec2py.entities.Circ import Circ
 from vec2py.entities.Rect import Rect
 from vec2py.CollisionDetection import CollisionDetection, CollisionSAT
 from vec2py.util import DoubleRect
+from vec2py.util.Vector import Vector
+from vec2py.util.Util import Util
 
 
 
@@ -55,10 +57,12 @@ class Display(Events, pyglet.window.Window):
 
     def remake(self, dt):
         self.collision_detection.routine()
-        self.quad_render = self.collision_detection.get_debug_lines()
+        if Util.DEBUG:
+            self.quad_render = self.collision_detection.get_debug_lines()
         if len(CollisionDetection._may_collide) > 0:
             if CollisionSAT.collisionSAT(self.temp_render_list[0], self.temp_render_list[1]):
                 print('collision')
+
 
     def on_draw(self):
         self.clear()
