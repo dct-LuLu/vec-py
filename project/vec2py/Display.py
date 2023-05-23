@@ -3,12 +3,9 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from pyglet import shapes
 from vec2py.Events import Events
-from vec2py.entities.Circ import Circ
-from vec2py.entities.Rect import Rect
+from vec2py.entities import Circ, Rect
 from vec2py.CollisionDetection import CollisionDetection, CollisionSAT
-from vec2py.util import DoubleRect
-from vec2py.util.Vector import Vector
-from vec2py.util.Util import Util
+from vec2py.util import DoubleRect, Util, Vector
 
 
 

@@ -1,7 +1,5 @@
 from vec2py.entities.Entity import Entity
-from vec2py.util.Util import Util
-from vec2py.util.Vector import Vector
-from vec2py.util.DoubleRect import DoubleRect
+from vec2py.util import DoubleRect, Util, Vector
 
 from pyglet import shapes
 

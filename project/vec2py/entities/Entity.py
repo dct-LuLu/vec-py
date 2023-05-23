@@ -1,5 +1,4 @@
-from vec2py.util.Vector import Vector
-from vec2py.util.DoubleRect import DoubleRect
+from vec2py.util import DoubleRect, Vector
 
 import inspect
 
