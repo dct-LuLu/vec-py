@@ -23,10 +23,12 @@ class Circ(Entity, shapes.Circle):
     def radius(self, value):
         self._radius = value
         self._squared_radius = value**2
+
         if not self.fixed_segments:
             self._segments = max(14, int(value / 1.25))
             self._num_verts = self._segments * 3
             self._create_vertex_list()
+            
         self._update_vertices()
         #if Util.DEBUG: print(f"radius: {self._radius} segments: {self._segments}")
 

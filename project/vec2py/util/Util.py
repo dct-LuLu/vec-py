@@ -13,6 +13,7 @@ class Util:
         """
         if isinf(value):
             raise ValueError(f"not a finite number {value}")
+        
         return value
 
     def testNumber(value):
@@ -21,6 +22,7 @@ class Util:
         """
         if isnan(value):
             raise ValueError(f"not a number {value}")
+        
         return value
 
     def limitAngle(angle):
@@ -30,9 +32,11 @@ class Util:
         if angle > pi:
             N = floor((angle + pi)/(2*pi))
             return angle - 2*pi*N
+        
         elif angle < -pi:
             N = floor((-angle + pi)/(2*pi))
             return angle + 2*pi*N
+        
         else:
             return angle
 
@@ -42,6 +46,7 @@ class Util:
         """
         if num is not None:
             return "{:e}".format(num)
+        
         else:
             return 'None' if num is None else 'undefined'
 
@@ -51,12 +56,16 @@ class Util:
         """
         if isnan(arg1) or isnan(arg2):
             raise 'argument is NaN'
+        
         if epsilon <= 0:
             raise f'epsilon must be positive {epsilon}'
+        
         if magnitude <= 0:
             raise f'magnitude must be positive {magnitude}'
+        
         maxArg = max(abs(arg1), abs(arg2))
         max = maxArg if maxArg > magnitude else magnitude
+
         return abs(arg1 - arg2) > epsilon*max
 
     def NF5(num):
@@ -65,6 +74,7 @@ class Util:
         """
         if num is not None:
             return "{:.5f}".format(num)
+        
         else:
             return 'None' if num is None else 'undefined'
 
@@ -76,6 +86,7 @@ class Util:
         if num is not None:
             s = Util.NF5(num)
             return s.rstrip('0').rstrip('.') if '.' in s else s
+        
         else:
             return 'None' if num is None else 'undefined'
 

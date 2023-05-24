@@ -16,6 +16,7 @@ class Events:
         if button in (mouse.LEFT, mouse.RIGHT):
             for _ in Entity.get_movables():
                 if _.is_inside(self.cursorpos) and _.maneuverable:
+                    
                     if (button == mouse.LEFT) and self.drag_object is None: # Drag
                         _.full_stop()
                         self.target = _

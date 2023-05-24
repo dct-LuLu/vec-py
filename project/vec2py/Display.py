@@ -23,7 +23,9 @@ class Display(Events, pyglet.window.Window):
 
         pyglet.clock.schedule_interval(self.remake, 1 / 60.0)
         #pyglet.clock.schedule_interval(self.simul, 1/600)
-        self.collision_detection = CollisionDetection(self.window_width, self.window_height)
+        setting = "SAT"
+        self.collision_detection = CollisionDetection(self.window_width, self.window_height, setting)
+        print(f"Collision detection set to {setting}")
        
         pyglet.app.run()
 
@@ -49,22 +51,25 @@ class Display(Events, pyglet.window.Window):
                 if i.x > self.window_width:
                     i.x = 1
 
-    def feur(self, dt):
-        print(dt)
-
     def remake(self, dt):
         self.collision_detection.routine()
         if Util.DEBUG:
             self.quad_render = self.collision_detection.get_debug_lines()
-        if len(CollisionDetection._may_collide) > 0:
-            if CollisionSAT.collisionSAT(self.temp_render_list[0], self.temp_render_list[1]):
-                print('collision')
+
+        for i in CollisionDetection._may_collide:
+            string = "Collision between "
+            for _ in i:
+                string += str(_) + " and "
+            print(string)
 
 
     def on_draw(self):
         self.clear()
-        for i in CollisionDetection._fun: i.draw()
-        for i in self.quad_render: i.draw()
+        
+        if Util.DEBUG:
+            for i in CollisionDetection._debug_squares: i.draw()
+            for i in self.quad_render: i.draw()
+
         for i in self.temp_render_list: i.draw()
 
     def grow(self, dt):

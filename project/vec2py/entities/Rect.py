@@ -61,3 +61,9 @@ class Rect(Entity, shapes.Rectangle):
         corners = self.get_corners()
         return [(corners[1] - corners[0]).getNormal().normalize(),
                 (corners[2] - corners[1]).getNormal().normalize()]
+    
+    def __str__(self):
+        return f"Rect(x={self.x}, y={self.y}, width={self.width}, height={self.height}, rotation={self.rotation})"
+    
+    def __repr__(self):
+        return self.__str__()
