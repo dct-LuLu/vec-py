@@ -49,9 +49,13 @@ class Display(Events, pyglet.window.Window):
                 self.quad_render = self.collision_detection.system.get_debug_lines()
 
         for i in CollisionDetection._may_collide:
-            string = "Collision between "
-            for _ in i:
-                string += str(_) + " and "
+            iterable = iter(i)
+
+            string = "Collision between " + str(next(iterable))
+
+            for _ in iterable:
+                string += " and " + str(_)
+
             print(string)
 
 
