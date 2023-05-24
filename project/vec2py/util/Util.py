@@ -1,7 +1,7 @@
 from math import isnan, isinf, pi, floor
 
 class Util:
-    DEBUG = False
+    DEBUG = True
     ADVANCED = False
 
     def __init__(self):

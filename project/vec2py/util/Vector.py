@@ -13,6 +13,157 @@ class Vector:
     def __repr__(self) -> str:
         return str("Vector{x: "+Util.NF(self._x)+", y: "+Util.NF(self._y)+"}") if Util.DEBUG else str()
 
+    def __eq__(self, __o: object) -> bool:
+        """
+        Returns true if the given object is a vector with the same coordinates as this vector
+        """
+        if __o is None:
+            return False
+        return self._x == __o.getX() and self._y == __o.getY()
+
+
+    def __mul__(self, other) -> "Vector":
+        """
+        Returns the vector multiplied by the given factor
+        """
+        if isinstance(other, Vector):
+            return Vector(self._x*other.getX(), self._y*other.getY())
+
+        elif isinstance(other, float) or isinstance(other, int):
+            if other == 1:
+                return self
+            else:
+                return Vector(self._x*other, self._y*other)
+
+        else:
+            raise NotImplementedError(f"cannot multiply vector by {other}")  
+        
+    def __rmul__(self, other) -> "Vector":
+        """
+        Returns the vector multiplied by the given factor
+        """
+        return self.__mul__(other)
+    
+
+    def __add__(self, other) -> "Vector":
+        """
+        Return the vector plus the given factor
+        """
+        if isinstance(other, Vector):
+            return Vector(self._x + other.getX(), self._y + other.getY())
+        
+        elif isinstance(other, float) or isinstance(other, int):
+            if other == 0:
+                return self
+            else:
+                return Vector(self._x + other, self._y + other)
+            
+        else:
+            raise NotImplementedError(f"cannot add vector to {other}")
+        
+    def __radd__(self, other) -> "Vector":
+        """
+        Return the vector plus the given factor
+        """
+        return self.__add__(other)        
+
+
+    def __sub__(self, other) -> "Vector":
+        """
+        Return the vector minus the given factor
+        """
+        if isinstance(other, Vector):
+            return Vector(self._x - other.getX(), self._y - other.getY())
+        
+        elif isinstance(other, float) or isinstance(other, int):
+            if other == 0:
+                return self
+            else:
+                return Vector(self._x - other, self._y - other)
+            
+        else:
+            raise NotImplementedError(f"cannot subtract {other} from vector")
+
+    def __rsub__(self, other) -> "Vector":
+        """
+        Return the vector minus the given factor
+        """
+        return self.__sub__(other)        
+
+
+    def __truediv__(self, other) -> "Vector":
+        """
+        Return the vector divided by the given factor
+        """
+        if isinstance(other, Vector):
+            return Vector(self._x / other.getX(), self._y / other.getY())
+        
+        elif isinstance(other, float) or isinstance(other, int):
+            if other == 1:
+                return self
+            elif other < self._TINY_POSITIVE:
+                raise ValueError(f"cannot divide by near zero {Util.NFE(other)}")
+            else:
+                return Vector(self._x / other, self._y / other)
+            
+        else:
+            raise NotImplementedError(f"cannot divide vector by {other}")
+
+    def __rtruediv__(self, other) -> "Vector":
+        """
+        Return the vector divided by the given factor
+        """
+        return self.__truediv__(other)
+    
+
+    def __floordiv__(self, other) -> "Vector":
+        """
+        Return the vector divided by the given factor
+        """
+        if isinstance(other, Vector):
+            return Vector(self._x // other.getX(), self._y // other.getY())
+        
+        elif isinstance(other, float) or isinstance(other, int):
+            if other == 1:
+                return self
+            elif other < self._TINY_POSITIVE:
+                raise ValueError(f"cannot divide by near zero {Util.NFE(other)}")
+            else:
+                return Vector(self._x // other, self._y // other)
+            
+        else:
+            raise NotImplementedError(f"cannot divide vector by {other}")
+        
+    def __rfloordiv__(self, other) -> "Vector":
+        """
+        Return the vector divided by the given factor
+        """
+        return self.__floordiv__(other)
+
+
+    def __pow__(self, other) -> "Vector":
+        """
+        Return the vector raised to the given power
+        """
+        if isinstance(other, Vector):
+            return Vector(self._x ** other.getX(), self._y ** other.getY())
+        
+        elif isinstance(other, float) or isinstance(other, int):
+            if other == 1:
+                return self
+            else:
+                return Vector(self._x ** other, self._y ** other)
+            
+        else:
+            raise NotImplementedError(f"cannot raise vector to {other}")
+        
+    def __rpow__(self, other) -> "Vector":
+        """
+        Return the vector raised to the given power
+        """
+        return self.__pow__(other)
+
+
     def getX(self) -> float:
         """
         Returns the x-coordinate of this vector
@@ -54,17 +205,6 @@ class Vector:
         """
         return sqrt(self.distanceSquaredTo(point))
 
-    def divide(self, factor: float) -> "Vector":
-        """
-        Returns the vector divided by the given factor
-        """
-        if factor == 1:
-            return self
-        elif factor < self._TINY_POSITIVE:
-            raise ValueError(f"cannot divide by near zero {Util.NFE(factor)}")
-        else:
-            return Vector(self._x/factor, self._y/factor)
-
     def dotProduct(self, other: "Vector") -> float:
         """
         Returns the dot product of this vector and the other given vector
@@ -77,25 +217,8 @@ class Vector:
                 raise ValueError("")
         return R
 
-    def __eq__(self, __o: object) -> bool:
-        """
-        Returns true if the given object is a vector with the same coordinates as this vector
-        """
-        if __o is None:
-            return False
-        return self._x == __o.getX() and self._y == __o.getY()
-
     def getAngle(self) -> float:
         return atan2(self._y, self._x)
-
-    def multiply(self, factor: float) -> "Vector":
-        """
-        Returns the vector multiplied by the given factor
-        """
-        if factor == 1:
-            return self
-        else:
-            return Vector(self._x*factor, self._y*factor)
 
     def nearEqual(self, other: "Vector", tolerance: float) -> bool:
         """
@@ -119,24 +242,13 @@ class Vector:
         if abs(cosAngle*cosAngle + sineAngle*sineAngle - 1) > 1E-12:
             raise ValueError(f"not cosine, sine: {cosAngle} {sineAngle}")
         return Vector(self._x*cosAngle - self._y*sineAngle, self._x*sineAngle + self._y*cosAngle)
-    
-    def __sub__(self, other: "Vector") -> "Vector":
-        """
-        Returns the vector minus the other vector
-        """
-        return Vector(self._x - other.getX(), self._y - other.getY())
 
-    def __add__(self, other: "Vector") -> "Vector":
-        """
-        Returns the vector plus the other vector
-        """
-        return Vector(self._x + other.getX(), self._y + other.getY())
-    
     def sum(self) -> float:
         """
         Returns the sum of the coordinates of this vector
         """
         return self._x + self._y
+    
 
 EAST = Vector(1, 0)
 NORTH = Vector(0, 1)
