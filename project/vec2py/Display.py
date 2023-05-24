@@ -34,12 +34,6 @@ class Display(Events, pyglet.window.Window):
         pyglet.app.run()
 
     def simul(self, dt):
-        gravity = Vector(0, -9.8)
-        for i in self.temp_render_list:
-            gravitationalForce:Vector = i._mass * gravity
-            airResistanceForce:Vector = -i._air_resistance_coefficient * i.get_velocity()
-            i.apply_forces(gravitationalForce, airResistanceForce)
-
         self.solver.simulate(self, dt)
 
     def remake(self, dt):
@@ -48,15 +42,15 @@ class Display(Events, pyglet.window.Window):
             if isinstance(self.collision_detection.system, PolygonMapQuadtree):
                 self.quad_render = self.collision_detection.system.get_debug_lines()
 
-        for i in CollisionDetection._may_collide:
-            iterable = iter(i)
+            for i in CollisionDetection._may_collide:
+                iterable = iter(i)
 
-            string = "Collision between " + str(next(iterable))
+                string = "Collision between " + str(next(iterable))
 
-            for _ in iterable:
-                string += " and " + str(_)
+                for _ in iterable:
+                    string += " and " + str(_)
 
-            print(string)
+                print(string)
 
 
     def on_draw(self):

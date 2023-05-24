@@ -31,8 +31,9 @@ class Events:
         if (buttons & mouse.LEFT) and self.drag_object is not None:
             self.drag_object.x += dx
             self.drag_object.y += dy
-            self.drag_object._x_velocity = dx*100
-            self.drag_object._y_velocity = dy*100
+
+            self.drag_object.x_acceleration += (dx*10)
+            self.drag_object.y_acceleration += (dy*10)
 
         if (buttons & mouse.RIGHT) and self.cue_object is not None:
             self.cursorpos = Vector(x, y)
@@ -43,6 +44,6 @@ class Events:
             self.drag_object = None
 
         elif (button & mouse.RIGHT) and self.cue_object is not None:
-            self.cue_object._x_velocity = 5 * (self.cue_object.x - x)
-            self.cue_object._y_velocity = 5 * (self.cue_object.y - y)
+            self.cue_object.x_acceleration += (self.cue_object.x - x)*5
+            self.cue_object.y_acceleration += (self.cue_object.y - y)*5
             self.cue_object = None

@@ -1,18 +1,19 @@
 from vec2py.entities.Entity import Entity
 from vec2py.util import DoubleRect, Util, Vector
+import math
 
 from pyglet import shapes
 
 class Circ(Entity, shapes.Circle):
-    def __init__(self, x, y, radius, segments=None, color=(255, 255, 255, 255), x_velocity=0, y_velocity=0, angular_velocity=0):
+    def __init__(self, x, y, radius, segments=None, color=(255, 255, 255, 255), density=0.388 ,x_velocity=0, y_velocity=0, angular_velocity=0):
         if segments is None: self.fixed_segments = False
         else: self.fixed_segments = True
-        
         shapes.Circle.__init__(self, x, y, radius, segments, color)
-        # creates, x, y, radius, color vars
-        Entity.__init__(self)
 
+        self.air_resistance_coefficient = 0.47
         self._squared_radius = radius**2 # évite de faire 50 fois la même opération et de faire des racines carrées
+        Entity.__init__(self, density)
+
 
     @property
     def radius(self):
@@ -31,6 +32,12 @@ class Circ(Entity, shapes.Circle):
             
         self._update_vertices()
         #if Util.DEBUG: print(f"radius: {self._radius} segments: {self._segments}")
+
+    def get_area(self):
+        return self._radius**2 * math.pi
+    
+    def get_mass(self):
+        return self.area * self.density
 
     def get_pos(self):
         """

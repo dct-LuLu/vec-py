@@ -1,3 +1,5 @@
+from vec2py.engine.Walls import Walls
+
 
 class SemiImplicitEuler:
     @staticmethod
@@ -6,22 +8,31 @@ class SemiImplicitEuler:
         dt *= force
         for i in self.temp_render_list:
             if i != self.drag_object:
-                i._x_velocity += i._x_acceleration * dt
-                i._y_velocity += i._y_acceleration * dt
+                i.net_force._x = 0
+                i.net_force._y = 0
+                i.net_force += i.force
+                
+                #i.net_force += i.get_air_resistance_force()
+                #i.net_force._x += i.x_velocity * -i.air_resistance_coefficient
+                #i.net_force._y += i.y_velocity * -i.air_resistance_coefficient
+                i.net_force._x += i.x_acceleration
+                i.net_force._y += i.y_acceleration
+                i.x_acceleration = 0
+                i.y_acceleration = 0
 
-                i.x += i._x_velocity * dt
-                i.y += i._y_velocity * dt
+                print(i.net_force)
+                i.x_velocity += i.net_force.getX() * dt
+                i.y_velocity += i.net_force.getY() * dt
+                i.angular_velocity += i.angular_acceleration * dt
 
-                #if i.x <= 0 or i.x >= self.window_width: i._x_velocity *= -1
+                i.x += i.x_velocity * dt
+                i.y += i.y_velocity * dt
+                i.rotation += i.angular_velocity * dt
 
-                if i.y <= 0 or i.y >= self.window_height:
-                    i._y_velocity *= -1
+                Walls.check(self, i)
 
-                if i.x < 0:
-                    i.x = self.window_width-1
 
-                if i.x > self.window_width:
-                    i.x = 1
+
 
 # RK-4 method python program
 

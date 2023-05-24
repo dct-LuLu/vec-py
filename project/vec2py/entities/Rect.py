@@ -5,15 +5,23 @@ from math import pi, cos, sin, radians
 from pyglet import shapes
 
 class Rect(Entity, shapes.Rectangle):
-    def __init__(self, x, y, width, height, rotation=0, color=(255, 255, 255, 255)):
+    def __init__(self, x, y, width, height, rotation=0, color=(255, 255, 255, 255), density=0.388):
         shapes.Rectangle.__init__(self, x, y, width, height, color)
-        Entity.__init__(self)
-        self.rotation = rotation
+        #self.rotation = rotation
         self.anchor_position = (width / 2, height / 2)
         self.needUpdate = True
+        self.air_resistance_coefficient = 1.05
+
+        Entity.__init__(self, density)
+
+    def get_area(self):
+        return self.width/100 * self.height/100
+    
+    def get_mass(self):
+        return self.area * self.density
 
     def draw(self):
-        self.rotation = (self.rotation + 1) % 360
+        #self.rotation = (self.rotation + 1) % 360
         super().draw()
         self.needUpdate = True
 
