@@ -7,6 +7,7 @@ class Events:
         self.drag_object = None # Référence à l'objet que l'on déplace
         self.cue_object = None # Référence à l'objet qui va être tiré
 
+        self.last_speeds = [Vector(0, 0)] * 10
         self.cursorpos = Vector(0, 0)
         self.target = None # Référence à l'objet selectionné pour les informations
 
@@ -31,9 +32,8 @@ class Events:
         if (buttons & mouse.LEFT) and self.drag_object is not None:
             self.drag_object.x += dx
             self.drag_object.y += dy
-
-            self.drag_object.x_acceleration += (dx*10)
-            self.drag_object.y_acceleration += (dy*10)
+            self.last_speeds.pop(0)
+            self.last_speeds.append(Vector(dx, dy)*600) # dépends BEAUCOUP de DT c'est chiant
 
         if (buttons & mouse.RIGHT) and self.cue_object is not None:
             self.cursorpos = Vector(x, y)
@@ -41,9 +41,13 @@ class Events:
     # AFTER
     def on_mouse_release(self, x, y, button, modifiers):
         if (button & mouse.LEFT) and self.drag_object is not None:
+            avg_x = sum(map(lambda _: _.getX(), self.last_speeds)) / len(self.last_speeds)
+            avg_y = sum(map(lambda _: _.getY(), self.last_speeds)) / len(self.last_speeds)
+            self.drag_object.internal_forces["A"] = Vector(avg_x, avg_y)
+
             self.drag_object = None
+            self.last_speeds = [Vector(0, 0)] * 10
 
         elif (button & mouse.RIGHT) and self.cue_object is not None:
-            self.cue_object.x_acceleration += (self.cue_object.x - x)*5
-            self.cue_object.y_acceleration += (self.cue_object.y - y)*5
+            self.cue_object.internal_forces["Q"] = Vector(self.cue_object.x - x, self.cue_object.y - y) * 5
             self.cue_object = None

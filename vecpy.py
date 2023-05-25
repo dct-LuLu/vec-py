@@ -10,7 +10,7 @@ import numpy as np
 
 def vectorize(p1: tuple[float, float], p2: tuple[float, float]) -> tuple[float, float]:
     """Takes two points in argument and returns the vector between them"""
-    return [p2[0]-p1[0], p2[1]-p1[1]]
+    return (p2[0]-p1[0], p2[1]-p1[1])
 
 def fast_fake_size(p1 , p2):
     """Calculates the size of the rectangle from two points (Faster for comparing distances)"""

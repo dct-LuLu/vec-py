@@ -1,36 +1,74 @@
 from vec2py.engine.Walls import Walls
+from vec2py.engine.maths.Constants import Constants
+from vec2py.util.Vector import Vector
+
+class Solver:
+    def __init__(self, setting="euler"):
+        match setting:
+            case "euler":
+                self.solver = SemiImplicitEuler
+            case "verlet":
+                self.solver = Verlet
+            case _:
+                raise Exception("Invalid solver setting")
+
+    def simulate(self, sup, dt):
+       
+        # c'est de pire en pire va savoir pk tout pue la chiasse avec le dt je vais me pendre
+        force = 10
+        dt *= force
+
+        for shape in sup.temp_render_list:
+            if shape != sup.drag_object:
+                self.solver.simulate(shape, dt)
+                Walls.check(sup, shape)
+
 
 
 class SemiImplicitEuler:
-
     @staticmethod
-    def simulate(sup, dt):
-        force = 10
-        dt *= force
-        for i in sup.temp_render_list:
-            if i != sup.drag_object:
-                i.net_force._x = 0
-                i.net_force._y = 0
-                i.net_force += i.force
-                
-                #i.net_force += i.get_air_resistance_force()
-                #i.net_force._x += i.x_velocity * -i.air_resistance_coefficient
-                #i.net_force._y += i.y_velocity * -i.air_resistance_coefficient
-                i.net_force._x += i.x_acceleration
-                i.net_force._y += i.y_acceleration
-                i.x_acceleration = 0
-                i.y_acceleration = 0
+    def simulate(shape, dt):
+        shape.internal_forces["G"] = Constants.GRAVITY * shape.mass
+        shape.internal_forces["r"] = Vector(shape.x_velocity, shape.y_velocity) * -shape.air_resistance_coefficient * dt
+        shape.apply_net_forces()
 
-                print(i.net_force)
-                i.x_velocity += i.net_force.getX() * dt
-                i.y_velocity += i.net_force.getY() * dt
-                i.angular_velocity += i.angular_acceleration * dt
+        # Mise à jour des vélocitées
+        shape.x_velocity += shape._net_force.getX() * dt
+        shape.y_velocity += shape._net_force.getY() * dt
+        shape.angular_velocity += shape.angular_acceleration * dt
 
-                i.x += i.x_velocity * dt
-                i.y += i.y_velocity * dt
-                i.rotation += i.angular_velocity * dt
+        # Mise à jour des positions
+        shape.x += shape.x_velocity * dt
+        shape.y += shape.y_velocity * dt
+        shape.rotation += shape.angular_velocity * dt
 
-                Walls.check(sup, i)
+
+class Verlet:
+    @staticmethod
+    def simulate(shape, dt):
+        # Calcul des forces internes
+        shape.internal_forces["G"] = Constants.GRAVITY * shape.mass
+        shape.internal_forces["r"] = Vector(shape.x_velocity, shape.y_velocity) * -shape.air_resistance_coefficient * dt
+        shape.apply_net_forces()
+
+        # Mise à jour de la position
+        shape.x += shape.x_velocity * dt + 0.5 * shape._net_force.getX() * dt * dt / shape.mass
+        shape.y += shape.y_velocity * dt + 0.5 * shape._net_force.getY() * dt * dt / shape.mass
+
+        # Calcul des nouvelles forces internes
+        new_internal_forces = {}
+        new_internal_forces["G"] = Constants.GRAVITY * shape.mass
+        new_internal_forces["r"] = Vector(shape.x_velocity, shape.y_velocity) * -shape.air_resistance_coefficient * dt
+        shape.internal_forces = new_internal_forces
+
+        # Mise à jour de la vitesse
+        shape.x_velocity += 0.5 * (shape._net_force.getX() + shape.internal_forces["r"].getX()) * dt / shape.mass
+        shape.y_velocity += 0.5 * (shape._net_force.getY() + shape.internal_forces["r"].getY()) * dt / shape.mass
+        shape.angular_velocity += shape.angular_acceleration * dt
+
+        # Mise à jour de la rotation
+        shape.rotation += shape.angular_velocity * dt
+
 
 
 

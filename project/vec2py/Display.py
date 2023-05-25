@@ -6,7 +6,7 @@ from vec2py.Events import Events
 from vec2py.entities import Circ, Rect
 from vec2py.CollisionDetection import CollisionDetection, PolygonMapQuadtree
 from vec2py.util import DoubleRect, Util, Vector
-from vec2py.engine.maths import Solver
+from vec2py.engine.maths.Solver import Solver
 
 
 
@@ -18,15 +18,15 @@ class Display(Events, pyglet.window.Window):
         if Util.DEBUG:
             self.quad_render = []
 
-        self.solver = Solver.SemiImplicitEuler()
+        self.solver = Solver()
         Events.__init__(self)
         # self.temp_render_list = [Circ(100, 100, 50, None, (98, 12, 225, 230)), Circ(200, 200, 13, None, (98, 12, 225, 230))]
         self.temp_render_list = [Rect(400, 300, 150, 100, 15), Rect(150, 250, 100, 25, 30)]
 
         pyglet.clock.schedule_interval(self.remake, 1 / 60.0)
         pyglet.clock.schedule_interval(self.simul, 1/600)
-        setting = "SAT"
         setting = "quadtree"
+        setting = "SAT"
         self.collision_detection = CollisionDetection(self.window_width, self.window_height, setting)
         print(f"Collision detection set to {setting}")
        
@@ -42,10 +42,12 @@ class Display(Events, pyglet.window.Window):
                 self.quad_render = self.collision_detection.system.get_debug_lines()
 
             for i in CollisionDetection._may_collide:
+                a = list(i)
+                a[0].collision(a[1])
                 iterable = iter(i)
 
                 string = "Collision between " + str(next(iterable))
-
+                
                 for _ in iterable:
                     string += " and " + str(_)
 

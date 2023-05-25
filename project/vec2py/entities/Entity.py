@@ -1,40 +1,89 @@
 from vec2py.util import DoubleRect, Vector
+from vec2py.engine.maths.Constants import Constants
+import math
 
 import inspect
 
 class Entity:
     instances: set = set()
-    air_density =  1.2041 # kg/m^3
 
-    def __init__(self, density, x_velocity=0, y_velocity=0, angular_velocity=5):
-        self.density = density # La densité de l'entité
+    def __init__(self, fixed=False, maneuverable=True, density=0.388, x_velocity=0, y_velocity=0, angular_velocity=0):
+        self.fixed = fixed # Si l'entité est fixe (ne bouge pas)
+        self.maneuverable = maneuverable # Si l'entité peut être contrôlée par le joueur
+
+        self.density = density if not fixed else float('inf') # La densité de l'entité
+
+
         self.area = self.get_area() # L'aire de l'entité
-        self.mass = self.get_mass() # La masse de l'entité
+        self.mass = self.get_mass() if not fixed else float('inf') # La masse de l'entité
 
+        self.x_velocity = x_velocity if not fixed else 0
 
-        self.force = Vector(0, -9.8)# La force de l'entité
-        self.x_velocity = x_velocity
-        self.x_acceleration = 0 # L'accélération de l'entité
+        self.y_velocity = y_velocity if not fixed else 0
+    
+        self.angular_velocity = angular_velocity
+        self.angular_acceleration = 0
 
-        self.y_velocity = y_velocity
-        self.y_acceleration = (self.force.getY() / self.mass) # L'accélération de l'entité
-
-        self.angular_velocity = angular_velocity # Jamais négatif et jamais supérieur à 360
-        self.angular_acceleration = 0 # L'accélération angulaire de l'entité
-
-        self.net_force = Vector(0, 0) # La force nette appliquée à l'entité
-
-        self.fixed = False # Si l'entité est fixe (ne bouge pas)
-        self.maneuverable = True # Si l'entité peut être contrôlée par le joueur
+        self.internal_forces = {}
+        self.external_forces = {}
+        self._net_force = Vector(0, 0)        
+        
         Entity.instances.add(self)
 
+    def collision(self, other):
+        # Calcul des vitesses de collision
+        relative_velocity_x = other.x_velocity - self.x_velocity
+        relative_velocity_y = other.x_velocity - self.x_velocity
 
-    def get_air_resistance_force(self) -> Vector:
-        a = self.air_resistance_coefficient 
-        b = self.air_density
-        c =((self.get_velocity()**2)/2)
-        d = self.area #may need to use abs my ass
-        return a*b*c*d
+        # Calcul de l'angle d'impact
+        collision_angle = math.atan2(other.y - self.y, other.x - self.x)
+
+        # Calcul des vitesses tangentielles
+        tangential_velocity1 = -self.angular_velocity * math.sin(collision_angle) * self.moment_of_inertia
+        tangential_velocity2 = other.angular_velocity * math.sin(collision_angle) * other.moment_of_inertia
+
+        # Calcul des vitesses normales
+        normal_velocity1 = (relative_velocity_x * math.cos(collision_angle) +
+                            relative_velocity_y * math.sin(collision_angle)) * self.mass
+        normal_velocity2 = (relative_velocity_x * math.cos(collision_angle) +
+                            relative_velocity_y * math.sin(collision_angle)) * other.mass
+
+        # Calcul des nouvelles vitesses normales après collision
+        new_normal_velocity1 = (normal_velocity1 * (self.mass - other.mass) +
+                                2 * other.mass * normal_velocity2) / (self.mass + other.mass)
+        new_normal_velocity2 = (normal_velocity2 * (other.mass - self.mass) +
+                                2 * self.mass * normal_velocity1) / (self.mass + other.mass)
+
+        # Calcul des nouvelles vitesses angulaires après collision
+        self.angular_velocity += (self.angular_velocity * (self.moment_of_inertia - other.moment_of_inertia) +
+                                2 * other.moment_of_inertia * other.angular_velocity) / (
+                                        self.moment_of_inertia + other.moment_of_inertia)
+        other.angular_velocity += (other.angular_velocity * (other.moment_of_inertia - self.moment_of_inertia) +
+                                2 * self.moment_of_inertia * self.angular_velocity) / (
+                                        self.moment_of_inertia + other.moment_of_inertia)
+
+        # Mise à jour des vitesses des objets après collision
+        vx1 = (new_normal_velocity1 * math.cos(collision_angle) -
+                            tangential_velocity1 * math.sin(collision_angle)) / self.mass
+        vy1 = (new_normal_velocity1 * math.sin(collision_angle) +
+                            tangential_velocity1 * math.cos(collision_angle)) / self.mass
+
+        vx2 = (new_normal_velocity2 * math.cos(collision_angle) -
+                            tangential_velocity2 * math.sin(collision_angle)) / other.mass
+        vy2 = (new_normal_velocity2 * math.sin(collision_angle) +
+                            tangential_velocity2 * math.cos(collision_angle)) / other.mass
+
+        self.external_forces['C'] = Vector(vx1, vy1)
+        other.external_forces['C'] = Vector(vx2, vy2)
+
+
+
+    def apply_net_forces(self):
+        #print(f"F {sum(self.internal_forces.values())} , A{sum(self.external_forces.values())}")
+        self._net_force = Vector(0, 0)
+        self._net_force = sum(self.internal_forces.values()) + sum(self.external_forces.values())
+        self.internal_forces = {}
+        self.external_forces = {}
 
     def get_velocity(self) -> Vector:
         return Vector(self.x_velocity, self.y_velocity)

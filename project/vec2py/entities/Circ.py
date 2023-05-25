@@ -5,14 +5,15 @@ import math
 from pyglet import shapes
 
 class Circ(Entity, shapes.Circle):
-    def __init__(self, x, y, radius, segments=None, color=(255, 255, 255, 255), density=0.388 ,x_velocity=0, y_velocity=0, angular_velocity=0):
+    def __init__(self, x, y, radius, segments=None, color=(255, 255, 255, 255), fixed=False, maneuverable=True, density=0.388, x_velocity=0, y_velocity=0, angular_velocity=0):
         if segments is None: self.fixed_segments = False
         else: self.fixed_segments = True
         shapes.Circle.__init__(self, x, y, radius, segments, color)
 
+        self.moment_of_inertia = .25 * self.get_mass() * self.radius**2 # 0.5?
         self.air_resistance_coefficient = 0.47
         self._squared_radius = radius**2 # évite de faire 50 fois la même opération et de faire des racines carrées
-        Entity.__init__(self, density)
+        Entity.__init__(self, fixed, maneuverable, density, x_velocity, y_velocity, angular_velocity)
 
 
     @property
