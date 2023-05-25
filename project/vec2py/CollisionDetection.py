@@ -85,8 +85,9 @@ class PolygonMapQuadtree:
         g = []
 
         for _ in range(4):
-            if a._childs[_] is not None and a._childs[_]._stage > 1: #agagag?
-                g += self.get_debug_lines(a._childs[_])
+            if a._childs[_] is not None:
+                if a._childs[_]._stage > 1: #agagag?
+                    g += self.get_debug_lines(a._childs[_])
                 
         return r + g
 
@@ -161,7 +162,7 @@ class CollisionSAT:
 
     def routine(self=None):
         CollisionDetection._may_collide = set()
-        for polygons in Util.unique_sets(Entity.get_movables()):
+        for polygons in Util.unique_sets(set(Entity.get_movables())):
             if CollisionSAT.collision_check_SAT(*polygons):
                 CollisionDetection._may_collide.add(polygons)
 
@@ -198,7 +199,7 @@ class CollisionSAT:
                     overlap = o
                     smallest = axis
 
-        overlap = smallest.multiply(overlap)
+        overlap = smallest * overlap
 
         dir = Vector(shape_b.x - shape_a.x, shape_b.y - shape_a.y)
 

@@ -13,7 +13,7 @@ class Vector:
     def __repr__(self) -> str:
         return str("Vector{x: "+Util.NF(self._x)+", y: "+Util.NF(self._y)+"}") if Util.DEBUG else str()
 
-    def __eq__(self, __o: object) -> bool:
+    def __eq__(self, __o: "Vector") -> bool:
         """
         Returns true if the given object is a vector with the same coordinates as this vector
         """
@@ -203,7 +203,7 @@ class Vector:
         """
         Returns the distance between this vector and the other vector
         """
-        return sqrt(self.distanceSquaredTo(point))
+        return sqrt(self.distanceSquared(point))
 
     def dotProduct(self, other: "Vector") -> float:
         """

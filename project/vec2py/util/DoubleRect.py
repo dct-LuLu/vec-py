@@ -142,7 +142,7 @@ class DoubleRect:
             case _:
                 raise ValueError(f"DoubleRect : Invalid quadrant {n}")
 
-    def __eq__(self, __o: object) -> bool:
+    def __eq__(self, __o: "DoubleRect") -> bool:
         """
         Returns true if the given object is a rectangle with the same coordinates as this rectangle
         """

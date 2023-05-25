@@ -4,9 +4,7 @@ class Util:
     DEBUG = True
     ADVANCED = False
 
-    def __init__(self):
-        raise ''
-
+    @staticmethod
     def testFinite(value):
         """
         Throws an error if the argument is not a finite number
@@ -16,6 +14,7 @@ class Util:
         
         return value
 
+    @staticmethod
     def testNumber(value):
         """
         Throws an error if the argument is not a number
@@ -25,6 +24,7 @@ class Util:
         
         return value
 
+    @staticmethod
     def limitAngle(angle):
         """
         Returns the angle in the range [-pi, +pi]
@@ -40,6 +40,7 @@ class Util:
         else:
             return angle
 
+    @staticmethod
     def NFE(num):
         """
         Returns the number formatted as a string with 7 digit exponential notation
@@ -50,24 +51,26 @@ class Util:
         else:
             return 'None' if num is None else 'undefined'
 
+    @staticmethod
     def veryDifferent(arg1, arg2, epsilon = 1E-14, magnitude = 1):
         """
         Returns true if the two arguments are very different
         """
         if isnan(arg1) or isnan(arg2):
-            raise 'argument is NaN'
+            raise OverflowError('argument is NaN')
         
         if epsilon <= 0:
-            raise f'epsilon must be positive {epsilon}'
+            raise ValueError(f'epsilon must be positive {epsilon}')
         
         if magnitude <= 0:
-            raise f'magnitude must be positive {magnitude}'
+            raise ValueError(f'magnitude must be positive {magnitude}')
         
         maxArg = max(abs(arg1), abs(arg2))
-        max = maxArg if maxArg > magnitude else magnitude
+        maxi = maxArg if maxArg > magnitude else magnitude
 
-        return abs(arg1 - arg2) > epsilon*max
+        return abs(arg1 - arg2) > epsilon*maxi
 
+    @staticmethod
     def NF5(num):
         """
         Returns the number formatted as a string with 5 digits of precision
@@ -78,7 +81,7 @@ class Util:
         else:
             return 'None' if num is None else 'undefined'
 
-
+    @staticmethod
     def nf5(num):
         """
         Returns a number formatted for 5 digits of precision with cleaned up trailing zeros
@@ -90,6 +93,7 @@ class Util:
         else:
             return 'None' if num is None else 'undefined'
 
+    @staticmethod
     def unique_sets(s: set) -> set:
         """
         Returns a set of sets of 2 objects from the input set of objects

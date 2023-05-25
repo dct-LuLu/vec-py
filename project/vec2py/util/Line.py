@@ -6,9 +6,6 @@ class Line(shapes.Line):
     def __init__(self, p1: Vector, p2: Vector, color=0):
         shapes.Line.__init__(self, p1.getX(), p1.getY(), p2.getX(), p2.getY())
     
-    def __str__(self):
-        return str("Line{p1: "+str(self._p1)+", p2: "+str(self._p2)+"}") if Util.DEBUG else str()
-
     def getP1(self) -> Vector:
         """
         Returns the first endpoint of this line
@@ -25,17 +22,17 @@ class Line(shapes.Line):
         """
         Returns the length of this line
         """
-        return self._p1.distance(self._p2)
+        return self.getP1().distance(self.getP2())
     
-    @classmethod
-    def make(self, x1: float, y1: float, x2: float, y2: float) -> "Line":
+    @staticmethod
+    def make(x1: float, y1: float, x2: float, y2: float) -> "Line":
         """
         Returns a line connecting the given points
         """
         return Line(Vector(x1, y1), Vector(x2, y2))
     
     def __str__(self):
-        return str("Line{p1: "+str(self._p1)+", p2: "+str(self._p2)+"}") if Util.DEBUG else str()
+        return str("Line{p1: "+str(self.getP1())+", p2: "+str(self.getP2())+"}") if Util.DEBUG else str()
     
     def __repr__(self):
-        return str("Line{p1: "+str(self._p1)+", p2: "+str(self._p2)+"}") if Util.DEBUG else str()
+        return str("Line{p1: "+str(self.getP1())+", p2: "+str(self.getP2())+"}") if Util.DEBUG else str()

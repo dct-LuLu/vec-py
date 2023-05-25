@@ -2,12 +2,13 @@ from vec2py.engine.Walls import Walls
 
 
 class SemiImplicitEuler:
+
     @staticmethod
-    def simulate(self, dt):
+    def simulate(sup, dt):
         force = 10
         dt *= force
-        for i in self.temp_render_list:
-            if i != self.drag_object:
+        for i in sup.temp_render_list:
+            if i != sup.drag_object:
                 i.net_force._x = 0
                 i.net_force._y = 0
                 i.net_force += i.force
@@ -29,7 +30,7 @@ class SemiImplicitEuler:
                 i.y += i.y_velocity * dt
                 i.rotation += i.angular_velocity * dt
 
-                Walls.check(self, i)
+                Walls.check(sup, i)
 
 
 
