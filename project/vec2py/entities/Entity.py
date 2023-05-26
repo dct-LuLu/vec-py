@@ -41,7 +41,7 @@ class Entity:
         wa1, wb1 = a.angular_velocity, b.angular_velocity
         wa2, wb2 = 0, 0
 
-        va1, vb1 = 
+        va1, vb1 = "",""
 
 
 
