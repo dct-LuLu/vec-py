@@ -7,6 +7,7 @@ from vec2py.entities import Circ, Rect
 from vec2py.CollisionDetection import CollisionDetection, PolygonMapQuadtree
 from vec2py.util import DoubleRect, Util, Vector
 from vec2py.engine.maths.Solver import Solver
+from vec2py.entities.Entity import Entity
 
 
 
@@ -43,7 +44,9 @@ class Display(Events, pyglet.window.Window):
 
             for i in CollisionDetection._may_collide:
                 a = list(i)
-                a[0].collision(a[1])
+                if len(a) == 2:
+                    Entity.agagag_collision(*a)
+
                 iterable = iter(i)
 
                 string = "Collision between " + str(next(iterable))

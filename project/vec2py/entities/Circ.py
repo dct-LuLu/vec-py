@@ -52,7 +52,7 @@ class Circ(Entity, shapes.Circle):
         """
         return DoubleRect.makeCentered(self.get_pos(), self.radius*2)
     
-    def is_inside(self, point: Vector):
+    def contains(self, point: Vector):
         """
         Returns whether the given point is inside the circle
         """
@@ -61,11 +61,11 @@ class Circ(Entity, shapes.Circle):
 
 if __name__ == "__main__":
     c = Circ(5, 5, 5)
-    print(c.is_inside(Vector(2, 2)))
-    print(c.is_inside(Vector(15, 5)))
+    print(c.contains(Vector(2, 2)))
+    print(c.contains(Vector(15, 5)))
     c.radius += 5
     print(c.radius)
     print(c.get_pos())
     print(c.get_AABB())
-    print(c.is_inside(Vector(12, 7)))
-    print(c.is_inside(Vector(20, 5)))
+    print(c.contains(Vector(12, 7)))
+    print(c.contains(Vector(20, 5)))

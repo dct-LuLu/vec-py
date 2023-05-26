@@ -176,10 +176,22 @@ class Vector:
         """
         return self._y
 
+    def cross_product_sp(self, w:int):
+        return Vector(-w*self.getY(), w*self.getX())
+
     def getNormal(self):
+        """
+        Returns a new vector that is the normal to this vector
+        """
         return Vector(-self._y, self._x)
 
+    def get_perpendicular_unit_vector(self):
+        return self.normalize().getNormal()
+
     def normalize(self):
+        """
+        Normalizes this vector to have length 1
+        """
         norm = sqrt(self._x**2 + self._y**2)
         return Vector(self._x / norm, self._y / norm)
 

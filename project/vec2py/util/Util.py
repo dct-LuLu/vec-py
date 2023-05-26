@@ -105,6 +105,25 @@ class Util:
                     r.add(frozenset([i, j]))
         return r
 
+
+
+    @staticmethod
+    def near_equal(a, b, epsilon = 1E-14):
+        """
+        Returns true if the two arguments are nearly equal
+        """
+        if epsilon <= 0:
+            raise ValueError(f'epsilon must be positive {epsilon}')
+        
+        return abs(a - b) < epsilon*max(abs(a), abs(b))
+
+    @staticmethod
+    def is_point_on_segment(segment_start, segment_end, point):
+        """
+        Returns true if the point is on the segment
+        """
+        return Util.near_equal(segment_start.distance(point) + point.distance(segment_end), segment_start.distance(segment_end))
+
     NF = nf5 # alias, base format number
 
 if __name__ == "__main__":
