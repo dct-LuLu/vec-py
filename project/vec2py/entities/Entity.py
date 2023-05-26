@@ -30,10 +30,25 @@ class Entity:
         
         Entity.instances.add(self)
 
+    def agagag_collision(self, b):
+        # https://www.myphysicslab.com/engine2D/collision-en.html#resting_contact
+        a = self
+
+        P = "" # collision point
+        ma, mb = a.mass, b.mass
+        rap = Vector(P.getX() - a.x, P.getY() - a.y)
+        rbp = Vector(P.getX() - b.x, P.getY() - b.y)
+        wa1, wb1 = a.angular_velocity, b.angular_velocity
+        wa2, wb2 = 0, 0
+
+        va1, vb1 = 
+
+
+
     def collision(self, other):
         # Calcul des vitesses de collision
         relative_velocity_x = other.x_velocity - self.x_velocity
-        relative_velocity_y = other.x_velocity - self.x_velocity
+        relative_velocity_y = other.y_velocity - self.y_velocity
 
         # Calcul de l'angle d'impact
         collision_angle = math.atan2(other.y - self.y, other.x - self.x)
@@ -55,14 +70,15 @@ class Entity:
                                 2 * self.mass * normal_velocity1) / (self.mass + other.mass)
 
         # Calcul des nouvelles vitesses angulaires après collision
-        self.angular_velocity += (self.angular_velocity * (self.moment_of_inertia - other.moment_of_inertia) +
+        self.angular_velocity = (self.angular_velocity * (self.moment_of_inertia - other.moment_of_inertia) +
                                 2 * other.moment_of_inertia * other.angular_velocity) / (
                                         self.moment_of_inertia + other.moment_of_inertia)
-        other.angular_velocity += (other.angular_velocity * (other.moment_of_inertia - self.moment_of_inertia) +
+        other.angular_velocity = (other.angular_velocity * (other.moment_of_inertia - self.moment_of_inertia) +
                                 2 * self.moment_of_inertia * self.angular_velocity) / (
                                         self.moment_of_inertia + other.moment_of_inertia)
 
         # Mise à jour des vitesses des objets après collision
+
         vx1 = (new_normal_velocity1 * math.cos(collision_angle) -
                             tangential_velocity1 * math.sin(collision_angle)) / self.mass
         vy1 = (new_normal_velocity1 * math.sin(collision_angle) +
