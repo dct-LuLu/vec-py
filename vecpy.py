@@ -589,7 +589,8 @@ def get_axes(rect: Rect):
 
     for i in range(2):
         j = 0 if i == 3 else i + 1
-        normal = (Vector2D(corners[i][0], corners[i][1]) - Vector2D(corners[j][0], corners[j][1])).getNormal().normalize()
+        normal = (Vector2D(corners[i][0], corners[i][1]) - Vector2D(corners[j][0],
+                                                                    corners[j][1])).get_normal().normalize()
 
         axes.append(normal)
 

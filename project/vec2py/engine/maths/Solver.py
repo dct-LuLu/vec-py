@@ -2,6 +2,7 @@ from vec2py.engine.Walls import Walls
 from vec2py.engine.maths.Constants import Constants
 from vec2py.util import Vector2D
 
+
 class Solver:
     def __init__(self, setting="euler"):
         match setting:
@@ -24,17 +25,17 @@ class Solver:
                 Walls.check(sup, shape)
 
 
-
 class SemiImplicitEuler:
     @staticmethod
     def simulate(shape, dt):
         shape.internal_forces["G"] = Constants.GRAVITY * shape.mass
-        shape.internal_forces["r"] = Vector2D(shape.x_velocity, shape.y_velocity) * -shape.air_resistance_coefficient * dt
+        shape.internal_forces["r"] = Vector2D(shape.x_velocity,
+                                              shape.y_velocity) * -shape.air_resistance_coefficient * dt
         shape.apply_net_forces()
 
         # Mise à jour des vélocitées
-        shape.x_velocity += shape._net_force.getX() * dt
-        shape.y_velocity += shape._net_force.getY() * dt
+        shape.x_velocity += shape._net_force.get_x() * dt
+        shape.y_velocity += shape._net_force.get_y() * dt
         shape.angular_velocity += shape.angular_acceleration * dt
 
         # Mise à jour des positions
@@ -48,22 +49,22 @@ class Verlet:
     def simulate(shape, dt):
         # Calcul des forces internes
         shape.internal_forces["G"] = Constants.GRAVITY * shape.mass
-        shape.internal_forces["r"] = Vector2D(shape.x_velocity, shape.y_velocity) * -shape.air_resistance_coefficient * dt
+        shape.internal_forces["r"] = Vector2D(shape.x_velocity,
+                                              shape.y_velocity) * -shape.air_resistance_coefficient * dt
         shape.apply_net_forces()
 
         # Mise à jour de la position
-        shape.x += shape.x_velocity * dt + 0.5 * shape._net_force.getX() * dt * dt / shape.mass
-        shape.y += shape.y_velocity * dt + 0.5 * shape._net_force.getY() * dt * dt / shape.mass
+        shape.x += shape.x_velocity * dt + 0.5 * shape._net_force.get_x() * dt * dt / shape.mass
+        shape.y += shape.y_velocity * dt + 0.5 * shape._net_force.get_y() * dt * dt / shape.mass
 
         # Calcul des nouvelles forces internes
-        new_internal_forces = {}
-        new_internal_forces["G"] = Constants.GRAVITY * shape.mass
-        new_internal_forces["r"] = Vector2D(shape.x_velocity, shape.y_velocity) * -shape.air_resistance_coefficient * dt
+        new_internal_forces = {"G": Constants.GRAVITY * shape.mass, "r": Vector2D(shape.x_velocity,
+                                                                                  shape.y_velocity) * -shape.air_resistance_coefficient * dt}
         shape.internal_forces = new_internal_forces
 
         # Mise à jour de la vitesse
-        shape.x_velocity += 0.5 * (shape._net_force.getX() + shape.internal_forces["r"].getX()) * dt / shape.mass
-        shape.y_velocity += 0.5 * (shape._net_force.getY() + shape.internal_forces["r"].getY()) * dt / shape.mass
+        shape.x_velocity += 0.5 * (shape._net_force.get_x() + shape.internal_forces["r"].get_x()) * dt / shape.mass
+        shape.y_velocity += 0.5 * (shape._net_force.get_y() + shape.internal_forces["r"].get_y()) * dt / shape.mass
         shape.angular_velocity += shape.angular_acceleration * dt
 
         # Mise à jour de la rotation
@@ -106,6 +107,7 @@ def rk4(x0,y0,xn,n):
     
     print('\nAt x=%.4f, y=%.4f' %(xn,yn))
 
+
 if __name__ == "__main__":
     # Inputs
     print('Enter initial conditions:')
@@ -119,4 +121,4 @@ if __name__ == "__main__":
     step = int(input('Number of steps = '))
 
     # RK4 method call
-    rk4(x0,y0,xn,step)
+    rk4(x0, y0, xn, step)

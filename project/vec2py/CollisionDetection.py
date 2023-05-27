@@ -12,33 +12,34 @@ from pyglet import shapes
 # TASDisplay
 
 class PolygonMapQuadtree:
-    _MAX_DEPTH = 6 #5461
-    _MAX_NODES = int((4**(_MAX_DEPTH + 1) - 1) / 3)
-    _PRE_CACHED_BOUNDS = {}
+    _MAX_DEPTH = 6  # 5 461
+    _MAX_NODES = int((4 ** (_MAX_DEPTH + 1) - 1) / 3)
+    PRE_CACHED_BOUNDS = {}
 
     if Util.DEBUG:
-        _debug_squares = set()
+        debug_squares = set()
 
     def __init__(self, window_width, window_height):
-        PolygonMapQuadtree._PRE_CACHED_BOUNDS["ROOT"] = DoubleRect.make(Vector2D(0, 0), Vector2D(window_width, window_height))
+        self._root = None
+        PolygonMapQuadtree.PRE_CACHED_BOUNDS["ROOT"] = DoubleRect.make(Vector2D(0, 0),
+                                                                       Vector2D(window_width, window_height))
         self.__precache(PolygonMapQuadtree._MAX_NODES)
         self.routine()
 
-
-    def __precache(self, stage:int, upper:int="ROOT"):
-        stage = int((stage-1)//4)
+    def __precache(self, stage: int, upper: int = "ROOT"):
+        stage = int((stage - 1) // 4)
 
         if stage >= 1:
-            bounds = PolygonMapQuadtree._PRE_CACHED_BOUNDS[upper]
+            bounds = PolygonMapQuadtree.PRE_CACHED_BOUNDS[upper]
 
             for _ in range(4):
                 if upper == "ROOT":
-                    next_upper = _*stage
+                    next_upper = _ * stage
 
                 else:
                     next_upper = (upper+1) + _*stage
 
-                PolygonMapQuadtree._PRE_CACHED_BOUNDS[next_upper] = bounds.quadrant(_)
+                PolygonMapQuadtree.PRE_CACHED_BOUNDS[next_upper] = bounds.quadrant(_)
                 self.__precache(stage, next_upper)
 
     @staticmethod
@@ -58,26 +59,25 @@ class PolygonMapQuadtree:
         return tab
 
     @staticmethod
-    def get_number(list):
+    def get_number(num_list):
         number = 0
-        for i in range(len(list)):
-            number += (list[i] * (4**(PolygonMapQuadtree._MAX_DEPTH - i) - 1) / 3)
+        for i in range(len(num_list)):
+            number += (num_list[i] * (4 ** (PolygonMapQuadtree._MAX_DEPTH - i) - 1) / 3)
 
-        return int(number) + (len(list) - 1)
-        
+        return int(number) + (len(num_list) - 1)
 
     def routine(self):
-        CollisionDetection._may_collide = set()
+        CollisionDetection.may_collide = set()
 
         if Util.DEBUG:
-            PolygonMapQuadtree._debug_squares = set()
+            PolygonMapQuadtree.debug_squares = set()
 
         self._root = QuadNode(PolygonMapQuadtree._MAX_NODES)
 
         for polygon in Entity.get_movables():
             self._root.insert(polygon)
 
-    def get_debug_lines(self, a = None):
+    def get_debug_lines(self, a=None):
         r = []
         a = self._root if a is None else a
         r.append(a.get_bounds().get_horizontal_line())
@@ -85,33 +85,38 @@ class PolygonMapQuadtree:
         g = []
 
         for _ in range(4):
-            if a._childs[_] is not None:
-                if a._childs[_]._stage > 1: #agagag?
-                    g += self.get_debug_lines(a._childs[_])
+            if a.child[_] is not None:
+                if a.child[_]._stage > 1:  # agagag?
+                    g += self.get_debug_lines(a.child[_])
                 
         return r + g
 
 
 class QuadNode:
-    def __init__(self, stage:int, num:int="ROOT"):
-        self._childs = [None] * 4 # [ Bottom left // Bottom right // Top right // Top left ]
-        self._stage = int((stage-1)//4)
+    def __init__(self, stage: int, num: int = "ROOT"):
+        self.child = [None] * 4  # [ Bottom left // Bottom right // Top right // Top left ]
+        self._stage = int((stage - 1) // 4)
         self._num = num
 
     def get_bounds(self):
-        return PolygonMapQuadtree._PRE_CACHED_BOUNDS[self._num]
-        
-    def get_rect(self, color = (85, 99, 25, 128)):
+        return PolygonMapQuadtree.PRE_CACHED_BOUNDS[self._num]
+
+    def get_rect(self, color=(85, 99, 25, 128)):
         bounds = self.get_bounds()
-        return shapes.Rectangle(bounds.getLeft(), bounds.getBottom(), bounds.getWidth(), bounds.getHeight(), color=color)
+        return shapes.Rectangle(bounds.get_left(), bounds.get_bottom(), bounds.get_width(), bounds.get_height(),
+                                color=color)
     
     def get_child_num(self, i):
         if self._num == "ROOT":
             match i:
-                case 0: return 0
-                case 1: return self._stage
-                case 2: return self._stage *2   
-                case 3: return self._stage *3
+                case 0:
+                    return 0
+                case 1:
+                    return self._stage
+                case 2:
+                    return self._stage * 2
+                case 3:
+                    return self._stage * 3
         else:
             match i:
                 case 0: return (self._num + 1)
@@ -119,10 +124,9 @@ class QuadNode:
                 case 2: return (self._num + 1) + 2*self._stage
                 case 3: return (self._num + 1) + 3*self._stage
 
-    
     def get_child_bounds(self, i):
         assert 0 <= i <= 3, "i must be between 0 and 3"
-        return PolygonMapQuadtree._PRE_CACHED_BOUNDS[self.get_child_num(i)]
+        return PolygonMapQuadtree.PRE_CACHED_BOUNDS[self.get_child_num(i)]
 
     def insert(self, polygon: Entity):
         assert isinstance(polygon, Entity), "Inserting entities is only allowed."
@@ -133,22 +137,22 @@ class QuadNode:
             for _ in range(4):
                 quadrants_bounds = self.get_child_bounds(_)
                 if AABB.intersects(quadrants_bounds):
-                    
-                    if self._stage == 1:# LEAF NODE
-                        if self._childs[_] is None: 
-                            self._childs[_] = {polygon}
-                            if Util.DEBUG:
-                                PolygonMapQuadtree._debug_squares.add(self.get_rect())
 
-                        elif polygon not in self._childs[_]:
-                            self._childs[_].add(polygon)
-                            CollisionDetection._may_collide.add(frozenset([*self._childs[_]]))
+                    if self._stage == 1:  # LEAF NODE
+                        if self.child[_] is None:
+                            self.child[_] = {polygon}
                             if Util.DEBUG:
-                                PolygonMapQuadtree._debug_squares.add(self.get_rect((217, 45, 78, 128)))
+                                PolygonMapQuadtree.debug_squares.add(self.get_rect())
 
-                    else:# BRANCH NODE
-                        if self._childs[_] is None: self._childs[_] = QuadNode(self._stage, self.get_child_num(_))
-                        self._childs[_].insert(polygon)
+                        elif polygon not in self.child[_]:
+                            self.child[_].add(polygon)
+                            CollisionDetection.may_collide.add(frozenset([*self.child[_]]))
+                            if Util.DEBUG:
+                                PolygonMapQuadtree.debug_squares.add(self.get_rect((217, 45, 78, 128)))
+
+                    else:  # BRANCH NODE
+                        if self.child[_] is None: self.child[_] = QuadNode(self._stage, self.get_child_num(_))
+                        self.child[_].insert(polygon)
 
 
         # get polygon AABB and store it
@@ -157,72 +161,57 @@ class QuadNode:
         # else insert the polygon reference in the node
 
 
-
 class CollisionSAT:
-
     def routine(self=None):
-        CollisionDetection._may_collide = set()
+        CollisionDetection.may_collide = set()
         for polygons in Util.unique_sets(set(Entity.get_movables())):
             if CollisionSAT.collision_check_SAT(*polygons):
-                CollisionDetection._may_collide.add(polygons)
+                CollisionDetection.may_collide.add(polygons)
 
     @staticmethod
-    def collisionSATWithAntiOverlap(shape_a: Entity, shape_b: Entity):
-        overlap = 10**6
+    def collision_SAT_with_anti_overlap(shape_a: Entity, shape_b: Entity):
+        overlap = 10 ** 6
         smallest = None
-        axes_a = shape_a.get_axesSAT()
-        axes_b = shape_b.get_axesSAT()
+        axes = [shape_a.get_axes_SAT(), shape_b.get_axes_SAT()]
 
-        for axis in axes_a:
-            p1 = CollisionSAT.projectShapeOntoAxis(shape_a, axis)
-            p2 = CollisionSAT.projectShapeOntoAxis(shape_b, axis)
+        for axes in axes.values():
+            for axis in axes:
+                p1 = CollisionSAT.project_shape_onto_axis(shape_a, axis)
+                p2 = CollisionSAT.project_shape_onto_axis(shape_b, axis)
 
-            if not p1.overlap(p2):
-                return None
-            else:
-                o = p1.getOverlap(p2);
+                if not p1.overlap(p2):
+                    return None
+                else:
+                    o = p1.get_overlap(p2)
 
-                if (o < overlap):
-                    overlap = o
-                    smallest = axis
-
-        for axis in axes_b:
-            p1 = CollisionSAT.projectShapeOntoAxis(shape_a, axis)
-            p2 = CollisionSAT.projectShapeOntoAxis(shape_b, axis)
-
-            if not p1.overlap(p2):
-                return None
-            else:
-                o = p1.getOverlap(p2);
-
-                if (o < overlap):
-                    overlap = o
-                    smallest = axis
+                    if o < overlap:
+                        overlap = o
+                        smallest = axis
 
         overlap = smallest * overlap
 
-        dir = Vector2D(shape_b.x - shape_a.x, shape_b.y - shape_a.y)
+        dir_v = Vector2D(shape_b.x - shape_a.x, shape_b.y - shape_a.y)
 
-        if (overlap.dotProduct(dir) > 0):
+        if Vector2D.dot_product(overlap, dir_v) > 0:
             overlap = overlap.multiply(-1)
 
         return overlap
 
     @staticmethod
     def collision_check_SAT(shape_a: Entity, shape_b: Entity):
-        axes_a = shape_a.get_axesSAT()
-        axes_b = shape_b.get_axesSAT()
+        axes_a = shape_a.get_axes_SAT()
+        axes_b = shape_b.get_axes_SAT()
 
         for axis in axes_a:
-            p1 = CollisionSAT.projectShapeOntoAxis(shape_a, axis)
-            p2 = CollisionSAT.projectShapeOntoAxis(shape_b, axis)
+            p1 = CollisionSAT.project_shape_onto_axis(shape_a, axis)
+            p2 = CollisionSAT.project_shape_onto_axis(shape_b, axis)
 
             if not p1.overlap(p2):
                 return False
 
         for axis in axes_b:
-            p1 = CollisionSAT.projectShapeOntoAxis(shape_a, axis)
-            p2 = CollisionSAT.projectShapeOntoAxis(shape_b, axis)
+            p1 = CollisionSAT.project_shape_onto_axis(shape_a, axis)
+            p2 = CollisionSAT.project_shape_onto_axis(shape_b, axis)
 
             if not p1.overlap(p2):
                 return False
@@ -230,36 +219,37 @@ class CollisionSAT:
         return True
 
     @staticmethod
-    def projectShapeOntoAxis(shape: Entity, axis: Vector2D):
+    def project_shape_onto_axis(shape: Entity, axis: Vector2D):
         vertices = shape.get_corners()
 
-        min = axis.dotProduct(vertices[0])
-        max = min
+        p_min = Vector2D.dot_product(axis, vertices[0])
+        p_max = p_min
 
-        for vertice in vertices[1:]:
-            p = axis.dotProduct(vertice)
+        for vertices in vertices[1:]:
+            p = Vector2D.dot_product(axis, vertices)
 
-            if p < min:
-                min = p
-            elif p > max:
-                max = p
+            if p < p_min:
+                p_min = p
+            elif p > p_max:
+                p_max = p
 
-        return Projection(min, max)
+        return Projection(p_min, p_max)
+
 
 class Projection:
-    def __init__(self, min, max):
-        self.min = min
-        self.max = max
+    def __init__(self, p_min, p_max):
+        self.p_min = p_min
+        self.p_max = p_max
 
     def overlap(self, other):
-        return self.min < other.max and other.min < self.max
+        return self.p_min < other.p_max and other.p_min < self.p_max
 
-    def getOverlap(self, other):
-        return min(self.max, other.max) - max(self.min, other.min)
+    def get_overlap(self, other):
+        return min(self.p_max, other.p_max) - max(self.p_min, other.p_min)
 
 
 class CollisionDetection:
-    _may_collide = set()
+    may_collide = set()
 
     def __init__(self, width, height, setting="SAT"):
         match setting:

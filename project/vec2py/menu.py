@@ -1,8 +1,8 @@
 def precache(self, bounds):
-        nb = self.get_nb_nodes()//4
+        nb = self.get_nb_nodes() // 4
         for _ in range(4):
-            self._PRE_CACHED_BOUNDS[_*nb] = bounds.quadrant(_)
-        print(self._PRE_CACHED_BOUNDS)
+            self.PRE_CACHED_BOUNDS[_ * nb] = bounds.quadrant(_)
+        print(self.PRE_CACHED_BOUNDS)
 
 {
     0:{

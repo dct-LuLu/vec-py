@@ -10,7 +10,6 @@ from vec2py.engine.maths.Solver import Solver
 from vec2py.entities.Entity import Entity
 
 
-
 class Display(Events, pyglet.window.Window):
     def __init__(self, window_width, window_height):
         self.window_width = window_width
@@ -25,15 +24,15 @@ class Display(Events, pyglet.window.Window):
         self.temp_render_list = [Rect(400, 300, 150, 100, 15), Rect(150, 250, 100, 25, 30)]
 
         pyglet.clock.schedule_interval(self.remake, 1 / 60.0)
-        pyglet.clock.schedule_interval(self.simul, 1/60)
-        setting = "quadtree"
+        pyglet.clock.schedule_interval(self.simulate, 1 / 60)
         setting = "SAT"
+        setting = "quadtree"
         self.collision_detection = CollisionDetection(self.window_width, self.window_height, setting)
         print(f"Collision detection set to {setting}")
 
         pyglet.app.run()
 
-    def simul(self, dt):
+    def simulate(self, dt):
         self.solver.simulate(self, dt)
 
     def remake(self, dt):
@@ -42,34 +41,36 @@ class Display(Events, pyglet.window.Window):
             if isinstance(self.collision_detection.system, PolygonMapQuadtree):
                 self.quad_render = self.collision_detection.system.get_debug_lines()
 
-            for i in CollisionDetection._may_collide:
+            for i in CollisionDetection.may_collide:
                 a = list(i)
                 if len(a) == 2:
-                    Entity.agagag_collision(*a)
+                    Entity.agagag_collision(self, *a)
 
                 iterable = iter(i)
 
                 string = "Collision between " + str(next(iterable))
-                
+
                 for _ in iterable:
                     string += " and " + str(_)
 
                 print(string)
 
-
     def on_draw(self):
         self.clear()
-        
+
         if Util.DEBUG:
             if isinstance(self.collision_detection.system, PolygonMapQuadtree):
-                for i in PolygonMapQuadtree._debug_squares: i.draw()
-                for i in self.quad_render: i.draw()
+                for i in PolygonMapQuadtree.debug_squares:
+                    i.draw()
+                for i in self.quad_render:
+                    i.draw()
 
-        for i in self.temp_render_list: i.draw()
+        for i in self.temp_render_list:
+            i.draw()
+
 
 if __name__ == "__main__":
     a = Display(800, 600)
-
 
 # Designing a 2D physics engine involves simulating the physical behavior of objects in your virtual world.
 # To compute the forces applied to each shape and determine their next positions,
