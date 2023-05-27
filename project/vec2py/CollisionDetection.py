@@ -1,5 +1,5 @@
 from vec2py.entities.Entity import Entity
-from vec2py.util import DoubleRect, Vector, Util
+from vec2py.util import DoubleRect, Vector2D, Util
 from pyglet import shapes
 
 
@@ -20,7 +20,7 @@ class PolygonMapQuadtree:
         _debug_squares = set()
 
     def __init__(self, window_width, window_height):
-        PolygonMapQuadtree._PRE_CACHED_BOUNDS["ROOT"] = DoubleRect.make(Vector(0, 0), Vector(window_width, window_height))
+        PolygonMapQuadtree._PRE_CACHED_BOUNDS["ROOT"] = DoubleRect.make(Vector2D(0, 0), Vector2D(window_width, window_height))
         self.__precache(PolygonMapQuadtree._MAX_NODES)
         self.routine()
 
@@ -201,7 +201,7 @@ class CollisionSAT:
 
         overlap = smallest * overlap
 
-        dir = Vector(shape_b.x - shape_a.x, shape_b.y - shape_a.y)
+        dir = Vector2D(shape_b.x - shape_a.x, shape_b.y - shape_a.y)
 
         if (overlap.dotProduct(dir) > 0):
             overlap = overlap.multiply(-1)
@@ -230,7 +230,7 @@ class CollisionSAT:
         return True
 
     @staticmethod
-    def projectShapeOntoAxis(shape: Entity, axis: Vector):
+    def projectShapeOntoAxis(shape: Entity, axis: Vector2D):
         vertices = shape.get_corners()
 
         min = axis.dotProduct(vertices[0])

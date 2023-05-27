@@ -580,7 +580,7 @@ class Sim:
 import os, sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), 'project')))
 
-from project.vec2py.util.Vector import Vector
+from project.vec2py.util.Vector2D import Vector2D
 
 def get_axes(rect: Rect):
     axes = []
@@ -589,7 +589,7 @@ def get_axes(rect: Rect):
 
     for i in range(2):
         j = 0 if i == 3 else i + 1
-        normal = (Vector(corners[i][0], corners[i][1]) - Vector(corners[j][0], corners[j][1])).getNormal().normalize()
+        normal = (Vector2D(corners[i][0], corners[i][1]) - Vector2D(corners[j][0], corners[j][1])).getNormal().normalize()
 
         axes.append(normal)
 
@@ -609,14 +609,14 @@ class Projection:
     def __str__(self):
         return f'min: {str(self.min)}; max: {str(self.max)}'
 
-def projectShapeOntoAxis(shape: Rect, axis: Vector):
+def projectShapeOntoAxis(shape: Rect, axis: Vector2D):
     vertices = shape.get_corners()
 
-    min = axis.dotProduct(Vector(vertices[0][0], vertices[0][1]))
+    min = axis.dotProduct(Vector2D(vertices[0][0], vertices[0][1]))
     max = min
 
     for vertice in vertices[1:]:
-        p = axis.dotProduct(Vector(vertice[0], vertice[1]))
+        p = axis.dotProduct(Vector2D(vertice[0], vertice[1]))
 
         if p < min:
             min = p
@@ -679,7 +679,7 @@ def collisionSATWithAntiOverlap(shape_a: Rect, shape_b: Rect):
 
     overlap = smallest.multiply(overlap)
 
-    dir = Vector(shape_b.x - shape_a.x, shape_b.y - shape_a.y)
+    dir = Vector2D(shape_b.x - shape_a.x, shape_b.y - shape_a.y)
 
     if (overlap.dotProduct(dir) > 0):
         overlap = overlap.multiply(-1)

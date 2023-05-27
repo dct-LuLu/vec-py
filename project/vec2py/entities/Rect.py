@@ -1,5 +1,5 @@
 from vec2py.entities.Entity import Entity
-from vec2py.util import DoubleRect, Vector, Util
+from vec2py.util import DoubleRect, Vector2D, Util
 from math import pi, cos, sin, radians
 
 
@@ -28,7 +28,7 @@ class Rect(Entity, shapes.Rectangle):
         super().draw()
         self.needUpdate = True
 
-    def get_corners(self) -> tuple[Vector, Vector, Vector, Vector]:
+    def get_corners(self) -> tuple[Vector2D, Vector2D, Vector2D, Vector2D]:
         r = radians(self.rotation)
 
         width = self.width / 2
@@ -37,10 +37,10 @@ class Rect(Entity, shapes.Rectangle):
         cosr = cos(r)
         sinr = -sin(r)
 
-        a = Vector(self.x + (-width * cosr - -height * sinr), self.y + (-width * sinr + -height * cosr))
-        b = Vector(self.x + (-width * cosr -  height * sinr), self.y + (-width * sinr +  height * cosr))
-        c = Vector(self.x + ( width * cosr -  height * sinr), self.y + ( width * sinr +  height * cosr))
-        d = Vector(self.x + ( width * cosr - -height * sinr), self.y + ( width * sinr + -height * cosr))
+        a = Vector2D(self.x + (-width * cosr - -height * sinr), self.y + (-width * sinr + -height * cosr))
+        b = Vector2D(self.x + (-width * cosr -  height * sinr), self.y + (-width * sinr +  height * cosr))
+        c = Vector2D(self.x + ( width * cosr -  height * sinr), self.y + ( width * sinr +  height * cosr))
+        d = Vector2D(self.x + ( width * cosr - -height * sinr), self.y + ( width * sinr + -height * cosr))
 
         return a, b, c, d
 
@@ -59,7 +59,7 @@ class Rect(Entity, shapes.Rectangle):
         max_x = max(a.getX(), b.getX(), c.getX(), d.getX())
         max_y = max(a.getY(), b.getY(), c.getY(), d.getY())
 
-        return Vector(min_x, min_y), Vector(max_x, max_y)
+        return Vector2D(min_x, min_y), Vector2D(max_x, max_y)
 
     def get_AABB(self):
         if self.needUpdate:
@@ -69,28 +69,28 @@ class Rect(Entity, shapes.Rectangle):
         return DoubleRect.make(self.aabb[0], self.aabb[1])
 
     def get_pos(self):
-        return Vector(self.x, self.y)
+        return Vector2D(self.x, self.y)
 
-    def contains(self, point: Vector):
+    def contains(self, point: Vector2D):
         return self.x - self.width / 2 <= point.getX() and self.x + self.width / 2 >= point.getX() \
             and self.y - self.height / 2 <= point.getY() and self.y + self.height / 2 >= point.getY()
 
     def is_point_inside(self, point, error_factor=1):
         # Translate the point and rectangle corners to the origin
         a, _, _, _ = self.get_corners()
-        translated_point = Vector(point.getX() - a.getX(), point.getY() - a.getY())
+        translated_point = Vector2D(point.getX() - a.getX(), point.getY() - a.getY())
         translated_corners = [
-            Vector(corner.getX() - a.getX(), corner.getY() - a.getY())
+            Vector2D(corner.getX() - a.getX(), corner.getY() - a.getY())
             for corner in self.get_corners()
         ]
 
         # Rotate the point and rectangle corners by the negative of the rectangle's rotation angle
-        rotated_point = Vector(
+        rotated_point = Vector2D(
             translated_point.getX() * cos(-self.rotation) - translated_point.getY() * sin(-self.rotation),
             translated_point.getX() * sin(-self.rotation) + translated_point.getY() * cos(-self.rotation)
         )
         rotated_corners = [
-            Vector(
+            Vector2D(
                 corner.getX() * cos(-self.rotation) - corner.getY() * sin(-self.rotation),
                 corner.getX() * sin(-self.rotation) + corner.getY() * cos(-self.rotation)
             )
@@ -113,7 +113,7 @@ class Rect(Entity, shapes.Rectangle):
 
         return False
 
-    def get_axesSAT(self) -> list[Vector]:
+    def get_axesSAT(self) -> list[Vector2D]:
         corners = self.get_corners()
         return [(corners[1] - corners[0]).getNormal().normalize(),
                 (corners[2] - corners[1]).getNormal().normalize()]

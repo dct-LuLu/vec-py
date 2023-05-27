@@ -1,6 +1,6 @@
 from vec2py.engine.Walls import Walls
 from vec2py.engine.maths.Constants import Constants
-from vec2py.util.Vector import Vector
+from vec2py.util import Vector2D
 
 class Solver:
     def __init__(self, setting="euler"):
@@ -29,7 +29,7 @@ class SemiImplicitEuler:
     @staticmethod
     def simulate(shape, dt):
         shape.internal_forces["G"] = Constants.GRAVITY * shape.mass
-        shape.internal_forces["r"] = Vector(shape.x_velocity, shape.y_velocity) * -shape.air_resistance_coefficient * dt
+        shape.internal_forces["r"] = Vector2D(shape.x_velocity, shape.y_velocity) * -shape.air_resistance_coefficient * dt
         shape.apply_net_forces()
 
         # Mise à jour des vélocitées
@@ -48,7 +48,7 @@ class Verlet:
     def simulate(shape, dt):
         # Calcul des forces internes
         shape.internal_forces["G"] = Constants.GRAVITY * shape.mass
-        shape.internal_forces["r"] = Vector(shape.x_velocity, shape.y_velocity) * -shape.air_resistance_coefficient * dt
+        shape.internal_forces["r"] = Vector2D(shape.x_velocity, shape.y_velocity) * -shape.air_resistance_coefficient * dt
         shape.apply_net_forces()
 
         # Mise à jour de la position
@@ -58,7 +58,7 @@ class Verlet:
         # Calcul des nouvelles forces internes
         new_internal_forces = {}
         new_internal_forces["G"] = Constants.GRAVITY * shape.mass
-        new_internal_forces["r"] = Vector(shape.x_velocity, shape.y_velocity) * -shape.air_resistance_coefficient * dt
+        new_internal_forces["r"] = Vector2D(shape.x_velocity, shape.y_velocity) * -shape.air_resistance_coefficient * dt
         shape.internal_forces = new_internal_forces
 
         # Mise à jour de la vitesse

@@ -1,5 +1,5 @@
 from vec2py.entities.Entity import Entity
-from vec2py.util import DoubleRect, Util, Vector
+from vec2py.util import DoubleRect, Util, Vector2D
 import math
 
 from pyglet import shapes
@@ -44,7 +44,7 @@ class Circ(Entity, shapes.Circle):
         """
         Returns the position of the circle as a Vector
         """
-        return Vector(self.x, self.y)
+        return Vector2D(self.x, self.y)
 
     def get_AABB(self):
         """
@@ -52,7 +52,7 @@ class Circ(Entity, shapes.Circle):
         """
         return DoubleRect.makeCentered(self.get_pos(), self.radius*2)
     
-    def contains(self, point: Vector):
+    def contains(self, point: Vector2D):
         """
         Returns whether the given point is inside the circle
         """
@@ -61,11 +61,11 @@ class Circ(Entity, shapes.Circle):
 
 if __name__ == "__main__":
     c = Circ(5, 5, 5)
-    print(c.contains(Vector(2, 2)))
-    print(c.contains(Vector(15, 5)))
+    print(c.contains(Vector2D(2, 2)))
+    print(c.contains(Vector2D(15, 5)))
     c.radius += 5
     print(c.radius)
     print(c.get_pos())
     print(c.get_AABB())
-    print(c.contains(Vector(12, 7)))
-    print(c.contains(Vector(20, 5)))
+    print(c.contains(Vector2D(12, 7)))
+    print(c.contains(Vector2D(20, 5)))

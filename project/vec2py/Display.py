@@ -5,7 +5,7 @@ from pyglet import shapes
 from vec2py.Events import Events
 from vec2py.entities import Circ, Rect
 from vec2py.CollisionDetection import CollisionDetection, PolygonMapQuadtree
-from vec2py.util import DoubleRect, Util, Vector
+from vec2py.util import DoubleRect, Util, Vector2D
 from vec2py.engine.maths.Solver import Solver
 from vec2py.entities.Entity import Entity
 
@@ -25,12 +25,12 @@ class Display(Events, pyglet.window.Window):
         self.temp_render_list = [Rect(400, 300, 150, 100, 15), Rect(150, 250, 100, 25, 30)]
 
         pyglet.clock.schedule_interval(self.remake, 1 / 60.0)
-        pyglet.clock.schedule_interval(self.simul, 1/600)
+        pyglet.clock.schedule_interval(self.simul, 1/60)
         setting = "quadtree"
         setting = "SAT"
         self.collision_detection = CollisionDetection(self.window_width, self.window_height, setting)
         print(f"Collision detection set to {setting}")
-       
+
         pyglet.app.run()
 
     def simul(self, dt):

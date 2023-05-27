@@ -1,7 +1,7 @@
 from vec2py.util.Util import Util
 from math import atan2, sqrt, isnan, cos, sin
 
-class Vector:
+class Vector2D:
     _TINY_POSITIVE = 1E-10
     def __init__(self, x, y):
         self._x = Util.testNumber(x)
@@ -13,7 +13,7 @@ class Vector:
     def __repr__(self) -> str:
         return str("Vector{x: "+Util.NF(self._x)+", y: "+Util.NF(self._y)+"}") if Util.DEBUG else str()
 
-    def __eq__(self, __o: "Vector") -> bool:
+    def __eq__(self, __o: "Vector2D") -> bool:
         """
         Returns true if the given object is a vector with the same coordinates as this vector
         """
@@ -22,81 +22,81 @@ class Vector:
         return self._x == __o.getX() and self._y == __o.getY()
 
 
-    def __mul__(self, other) -> "Vector":
+    def __mul__(self, other) -> "Vector2D":
         """
         Returns the vector multiplied by the given factor
         """
-        if isinstance(other, Vector):
-            return Vector(self._x*other.getX(), self._y*other.getY())
+        if isinstance(other, Vector2D):
+            return Vector2D(self._x*other.getX(), self._y*other.getY())
 
         elif isinstance(other, float) or isinstance(other, int):
             if other == 1:
                 return self
             else:
-                return Vector(self._x*other, self._y*other)
+                return Vector2D(self._x*other, self._y*other)
 
         else:
             raise NotImplementedError(f"cannot multiply vector by {other}")  
         
-    def __rmul__(self, other) -> "Vector":
+    def __rmul__(self, other) -> "Vector2D":
         """
         Returns the vector multiplied by the given factor
         """
         return self.__mul__(other)
     
 
-    def __add__(self, other) -> "Vector":
+    def __add__(self, other) -> "Vector2D":
         """
         Return the vector plus the given factor
         """
-        if isinstance(other, Vector):
-            return Vector(self._x + other.getX(), self._y + other.getY())
+        if isinstance(other, Vector2D):
+            return Vector2D(self._x + other.getX(), self._y + other.getY())
         
         elif isinstance(other, float) or isinstance(other, int):
             if other == 0:
                 return self
             else:
-                return Vector(self._x + other, self._y + other)
+                return Vector2D(self._x + other, self._y + other)
             
         else:
             raise NotImplementedError(f"cannot add vector to {other}")
         
-    def __radd__(self, other) -> "Vector":
+    def __radd__(self, other) -> "Vector2D":
         """
         Return the vector plus the given factor
         """
         return self.__add__(other)        
 
 
-    def __sub__(self, other) -> "Vector":
+    def __sub__(self, other) -> "Vector2D":
         """
         Return the vector minus the given factor
         """
-        if isinstance(other, Vector):
-            return Vector(self._x - other.getX(), self._y - other.getY())
+        if isinstance(other, Vector2D):
+            return Vector2D(self._x - other.getX(), self._y - other.getY())
         
         elif isinstance(other, float) or isinstance(other, int):
             if other == 0:
                 return self
             else:
-                return Vector(self._x - other, self._y - other)
+                return Vector2D(self._x - other, self._y - other)
             
         else:
             raise NotImplementedError(f"cannot subtract {other} from vector")
 
-    def __rsub__(self, other) -> "Vector":
+    def __rsub__(self, other) -> "Vector2D":
         """
         Return the vector minus the given factor
         """
         return self.__sub__(other)        
 
 
-    def __truediv__(self, other) -> "Vector":
+    def __truediv__(self, other) -> "Vector2D":
         """
         Return the vector divided by the given factor
         """
-        if isinstance(other, Vector):
-            return Vector(self._x / other.getX(), self._y / other.getY())
+        if isinstance(other, Vector2D):
+            return Vector2D(self._x / other.getX(), self._y / other.getY())
         
         elif isinstance(other, float) or isinstance(other, int):
             if other == 1:
@@ -104,24 +104,24 @@ class Vector:
             elif other < self._TINY_POSITIVE:
                 raise ValueError(f"cannot divide by near zero {Util.NFE(other)}")
             else:
-                return Vector(self._x / other, self._y / other)
+                return Vector2D(self._x / other, self._y / other)
             
         else:
             raise NotImplementedError(f"cannot divide vector by {other}")
 
-    def __rtruediv__(self, other) -> "Vector":
+    def __rtruediv__(self, other) -> "Vector2D":
         """
         Return the vector divided by the given factor
         """
         return self.__truediv__(other)
     
 
-    def __floordiv__(self, other) -> "Vector":
+    def __floordiv__(self, other) -> "Vector2D":
         """
         Return the vector divided by the given factor
         """
-        if isinstance(other, Vector):
-            return Vector(self._x // other.getX(), self._y // other.getY())
+        if isinstance(other, Vector2D):
+            return Vector2D(self._x // other.getX(), self._y // other.getY())
         
         elif isinstance(other, float) or isinstance(other, int):
             if other == 1:
@@ -129,35 +129,35 @@ class Vector:
             elif other < self._TINY_POSITIVE:
                 raise ValueError(f"cannot divide by near zero {Util.NFE(other)}")
             else:
-                return Vector(self._x // other, self._y // other)
+                return Vector2D(self._x // other, self._y // other)
             
         else:
             raise NotImplementedError(f"cannot divide vector by {other}")
         
-    def __rfloordiv__(self, other) -> "Vector":
+    def __rfloordiv__(self, other) -> "Vector2D":
         """
         Return the vector divided by the given factor
         """
         return self.__floordiv__(other)
 
 
-    def __pow__(self, other) -> "Vector":
+    def __pow__(self, other) -> "Vector2D":
         """
         Return the vector raised to the given power
         """
-        if isinstance(other, Vector):
-            return Vector(self._x ** other.getX(), self._y ** other.getY())
+        if isinstance(other, Vector2D):
+            return Vector2D(self._x ** other.getX(), self._y ** other.getY())
         
         elif isinstance(other, float) or isinstance(other, int):
             if other == 1:
                 return self
             else:
-                return Vector(self._x ** other, self._y ** other)
+                return Vector2D(self._x ** other, self._y ** other)
             
         else:
             raise NotImplementedError(f"cannot raise vector to {other}")
         
-    def __rpow__(self, other) -> "Vector":
+    def __rpow__(self, other) -> "Vector2D":
         """
         Return the vector raised to the given power
         """
@@ -177,13 +177,13 @@ class Vector:
         return self._y
 
     def cross_product_sp(self, w:int):
-        return Vector(-w*self.getY(), w*self.getX())
+        return Vector2D(-w*self.getY(), w*self.getX())
 
     def getNormal(self):
         """
         Returns a new vector that is the normal to this vector
         """
-        return Vector(-self._y, self._x)
+        return Vector2D(-self._y, self._x)
 
     def get_perpendicular_unit_vector(self):
         return self.normalize().getNormal()
@@ -193,9 +193,9 @@ class Vector:
         Normalizes this vector to have length 1
         """
         norm = sqrt(self._x**2 + self._y**2)
-        return Vector(self._x / norm, self._y / norm)
+        return Vector2D(self._x / norm, self._y / norm)
 
-    def angleTo(self, other: "Vector") -> float:
+    def angleTo(self, other: "Vector2D") -> float:
         """
         Returns the angle between this vector and the other vector, in radians; positive means counterclockwise
         """
@@ -203,7 +203,7 @@ class Vector:
         BT = atan2(other.getY(), other.getX())
         return Util.limitAngle(BT - AT)
         
-    def distanceSquared(self, point: "Vector") -> float:
+    def distanceSquared(self, point: "Vector2D") -> float:
         """
         Returns the square of the distance between this vector and the other vector
         """
@@ -211,13 +211,13 @@ class Vector:
         DY = self._y - point.getY()
         return DX*DX + DY*DY
 
-    def distance(self, point: "Vector") -> float:
+    def distance(self, point: "Vector2D") -> float:
         """
         Returns the distance between this vector and the other vector
         """
         return sqrt(self.distanceSquared(point))
 
-    def dotProduct(self, other: "Vector") -> float:
+    def dotProduct(self, other: "Vector2D") -> float:
         """
         Returns the dot product of this vector and the other given vector
         """
@@ -232,7 +232,7 @@ class Vector:
     def getAngle(self) -> float:
         return atan2(self._y, self._x)
 
-    def nearEqual(self, other: "Vector", tolerance: float) -> bool:
+    def nearEqual(self, other: "Vector2D", tolerance: float) -> bool:
         """
         Returns true if the other vector is within the given tolerance of this vector
         """
@@ -253,7 +253,7 @@ class Vector:
             sineAngle = sin(angle)
         if abs(cosAngle*cosAngle + sineAngle*sineAngle - 1) > 1E-12:
             raise ValueError(f"not cosine, sine: {cosAngle} {sineAngle}")
-        return Vector(self._x*cosAngle - self._y*sineAngle, self._x*sineAngle + self._y*cosAngle)
+        return Vector2D(self._x*cosAngle - self._y*sineAngle, self._x*sineAngle + self._y*cosAngle)
 
     def sum(self) -> float:
         """
@@ -262,8 +262,8 @@ class Vector:
         return self._x + self._y
     
 
-EAST = Vector(1, 0)
-NORTH = Vector(0, 1)
-WEST = Vector(-1, 0)
-SOUTH = Vector(0, -1)
-ORIGIN = Vector(0, 0)
+EAST = Vector2D(1, 0)
+NORTH = Vector2D(0, 1)
+WEST = Vector2D(-1, 0)
+SOUTH = Vector2D(0, -1)
+ORIGIN = Vector2D(0, 0)

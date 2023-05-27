@@ -1,6 +1,7 @@
-from vec2py.util import DoubleRect, Vector
+from vec2py.util import DoubleRect, Vector2D
 from vec2py.engine.maths.Constants import Constants
 from vec2py.util.Util import Util
+from vec2py.util.Vector3D import Vector3D
 import math
 
 import inspect
@@ -27,7 +28,7 @@ class Entity:
 
         self.internal_forces = {}
         self.external_forces = {}
-        self._net_force = Vector(0, 0)        
+        self._net_force = Vector2D(0, 0)        
         
         Entity.instances.add(self)
 
@@ -41,16 +42,18 @@ class Entity:
 
         ma, mb = a.mass, b.mass
 
-        rap = Vector(P.getX() - a.x, P.getY() - a.y)
-        rbp = Vector(P.getX() - b.x, P.getY() - b.y)
+        rap = Vector2D(P.getX() - a.x, P.getY() - a.y)
+        rbp = Vector2D(P.getX() - b.x, P.getY() - b.y)
 
         wa1, wb1 = a.angular_velocity, b.angular_velocity
         wa2, wb2 = None, None # WHAT WE WANT
 
-        va1, vb1 = Vector(a.x_velocity, a.y_velocity), Vector(b.x_velocity, b.y_velocity)
+        va1, vb1 = Vector2D(a.x_velocity, a.y_velocity), Vector2D(b.x_velocity, b.y_velocity)
         va2, vb2 = None, None # WHAT WE WANT
 
-        n = perf_obj.get_perfored_vector(P).get_perpendicular_unit_vector()
+        n = perf_obj.get_perfored_vector(P)
+        if n == None: return
+        n = n.get_perpendicular_unit_vector()
 
         #####
 
@@ -67,25 +70,19 @@ class Entity:
 
         # vab2.dotProduct(n) = -e * rel_normal_velocity
 
-        #####
-        print(n) # agagagag?
-
         if mb == float('inf'):
             j = (-(i+e)*vap1.dotProduct(n)) / (1/ma + (rap.cross_product_sp(n)**2/a.moment_of_inertia))
         elif ma == float('inf'):
             j = ((i+e)*vbp1.dotProduct(n)) / (1/mb + (rbp.cross_product_sp(n)**2/b.moment_of_inertia))
         else:
-            j = (-(1+e)*rel_normal_velocity) / (1/ma + 1/mb + rap.cross_product_sp(n)**2/a.moment_of_inertia + rbp.cross_product_sp(n)**2/b.moment_of_inertia)
-
+            j = (-(1+e)*rel_normal_velocity) / (1/ma + 1/mb + Vector3D.cross_product_2D(rap, n).self_dot_product()/a.moment_of_inertia
+                + Vector3D.cross_product_2D(rbp, n).self_dot_product()/b.moment_of_inertia)
 
         va2 = va1 + j*n/ma
         vb2 = vb1 - j*n/mb
 
-        # FAUT IMPLEMENTER UN VRAI CROSS PRODUCT SAUF QUE JE COMPRENDS PAS COMMENT CA MARCHE NI C QUOI LOL
-        # SUR LE SITE CA MONTRE DUNE FACON TRES SPECIALE AVEC UN VECTEUR X Y ET UNE ROTATION
-        # MAIS LA CEST DIFFERENT AVEC N
-        wa2 = wa1 + rap.cross_product_sp(j*n)/a.moment_of_inertia
-        wb2 = wb1 - rbp.cross_product_sp(j*n)/b.moment_of_inertia
+        wa2 = wa1 + Vector3D.cross_product_2D(rap, j*n).getZ()/a.moment_of_inertia
+        wb2 = wb1 - Vector3D.cross_product_2D(rap, j*n).getZ()/b.moment_of_inertia
 
         a.x_velocity, a.y_velocity = va2.getX(), va2.getY()
         b.x_velocity, b.y_velocity = vb2.getX(), vb2.getY()
@@ -152,20 +149,20 @@ class Entity:
         vy2 = (new_normal_velocity2 * math.sin(collision_angle) +
                             tangential_velocity2 * math.cos(collision_angle)) / other.mass
 
-        self.external_forces['C'] = Vector(vx1, vy1)
-        other.external_forces['C'] = Vector(vx2, vy2)
+        self.external_forces['C'] = Vector2D(vx1, vy1)
+        other.external_forces['C'] = Vector2D(vx2, vy2)
 
 
 
     def apply_net_forces(self):
         #print(f"F {sum(self.internal_forces.values())} , A{sum(self.external_forces.values())}")
-        self._net_force = Vector(0, 0)
+        self._net_force = Vector2D(0, 0)
         self._net_force = sum(self.internal_forces.values()) + sum(self.external_forces.values())
         self.internal_forces = {}
         self.external_forces = {}
 
-    def get_velocity(self) -> Vector:
-        return Vector(self.x_velocity, self.y_velocity)
+    def get_velocity(self) -> Vector2D:
+        return Vector2D(self.x_velocity, self.y_velocity)
 
     def full_stop(self):
         self.x_velocity = 0
@@ -183,8 +180,8 @@ class Entity:
     def get_AABB(self) -> DoubleRect:
         raise Exception(f'{inspect.stack()[0][3]}() is not implemented for the class: {self.__class__} ')
 
-    def get_axesSAT(self) -> list[Vector]:
+    def get_axesSAT(self) -> list[Vector2D]:
         raise Exception(f'{inspect.stack()[0][3]}() is not implemented for the class: {self.__class__} ')
 
-    def get_corners(self) -> tuple[Vector, Vector]:
+    def get_corners(self) -> tuple[Vector2D, Vector2D]:
         raise Exception(f'{inspect.stack()[0][3]}() is not implemented for the class: {self.__class__} ')

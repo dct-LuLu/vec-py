@@ -1,4 +1,4 @@
-from vec2py.util.Vector import Vector
+from vec2py.util.Vector2D import Vector2D
 from vec2py.util.Util import Util
 from vec2py.util.Line import Line
 
@@ -70,22 +70,22 @@ class DoubleRect:
         """
         return (self._bottom + self._top)/2
 
-    def getCenter(self) -> Vector:
+    def getCenter(self) -> Vector2D:
         """
         Returns the center of this rectangle
         """
-        return Vector(self.getCenterX(), self.getCenterY())
+        return Vector2D(self.getCenterX(), self.getCenterY())
 
 
-    def getCoordinates(self) -> tuple[Vector, Vector, Vector, Vector]:
+    def getCoordinates(self) -> tuple[Vector2D, Vector2D, Vector2D, Vector2D]:
         """
         Returns the four corners of this rectangle
         """
-        return (Vector(self._left, self._bottom), Vector(self._right, self._bottom), Vector(self._right, self._top), Vector(self._left, self._top))
+        return (Vector2D(self._left, self._bottom), Vector2D(self._right, self._bottom), Vector2D(self._right, self._top), Vector2D(self._left, self._top))
 
 
     @staticmethod
-    def make(point1: Vector, point2: Vector) -> "DoubleRect":
+    def make(point1: Vector2D, point2: Vector2D) -> "DoubleRect":
         """
         Returns a new rectangle with the given corners
         """
@@ -96,7 +96,7 @@ class DoubleRect:
         return DoubleRect(LEFT, BOTTOM, RIGHT, TOP)
 
     @staticmethod
-    def makeCentered(center: Vector, width, height=None) -> "DoubleRect":
+    def makeCentered(center: Vector2D, width, height=None) -> "DoubleRect":
         """
         Returns a new rectangle with the given center and size
         """
@@ -106,7 +106,7 @@ class DoubleRect:
         return DoubleRect(center.getX() - HALF_WIDTH, center.getY() - HALF_HEIGHT, center.getX() + HALF_WIDTH, center.getY() + HALF_HEIGHT)
 
 
-    def containsPoint(self, point: Vector) -> bool:
+    def containsPoint(self, point: Vector2D) -> bool:
         """
         Returns whether the given point is inside the rectangle
         """
@@ -205,7 +205,7 @@ class DoubleRect:
         H = self.getHeight()
         return DoubleRect(X0 - HALF_FACTOR_X*W, Y0 - HALF_FACTOR_Y*H, X0 + HALF_FACTOR_X*W, Y0 + HALF_FACTOR_Y*H)
 
-    def translate(self, coords: Vector) -> "DoubleRect":
+    def translate(self, coords: Vector2D) -> "DoubleRect":
         """
         Translates the rectangle by the given amount
         """
@@ -222,7 +222,7 @@ class DoubleRect:
             min(self._bottom, rect.getBottom())
             )
 
-    def unionPoint(self, point: Vector) -> "DoubleRect":
+    def unionPoint(self, point: Vector2D) -> "DoubleRect":
         """
         Returns the union of this rectangle with the given point
         """
