@@ -25,8 +25,8 @@ class Display(Events, pyglet.window.Window):
 
         pyglet.clock.schedule_interval(self.remake, 1 / 60.0)
         pyglet.clock.schedule_interval(self.simulate, 1 / 60)
-        setting = "SAT"
         setting = "quadtree"
+        setting = "SAT"
         self.collision_detection = CollisionDetection(self.window_width, self.window_height, setting)
         print(f"Collision detection set to {setting}")
 
