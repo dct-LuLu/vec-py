@@ -51,9 +51,7 @@ class Entity:
         va1, vb1 = Vector2D(a.x_velocity, a.y_velocity), Vector2D(b.x_velocity, b.y_velocity)
         va2, vb2 = None, None # WHAT WE WANT
 
-        n = perf_obj.get_perfored_vector(P)
-        if n == None: return
-        n = n.get_perpendicular_unit_vector()
+        n = perf_obj.get_perfored_vector(P).get_perpendicular_unit_vector()
 
         #####
 

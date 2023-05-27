@@ -45,11 +45,18 @@ class Rect(Entity, shapes.Rectangle):
         return a, b, c, d
 
     def get_perfored_vector(self, p):
-        a, b, c, _ = self.get_corners()
+        a, b, c, d = self.get_corners()
+
         if Util.is_point_on_segment(a, b, p):
             return a-b
-        elif Util.is_point_on_segment(b, c, p):
+
+        if Util.is_point_on_segment(b, c, p):
             return b-c
+
+        if Util.is_point_on_segment(c, d, p):
+            return c-d
+
+        raise Exception('Unreachable code')
 
     def get_min_max(self):
         a, b, c, d = self.get_corners()
