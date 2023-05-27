@@ -179,6 +179,9 @@ class Vector2D:
     def cross_product_sp(self, w:int):
         return Vector2D(-w*self.getY(), w*self.getX())
 
+    def cross_product(self, other: "Vector2D") -> float:
+        return self.getX() * other.getY() - self.getY() * other.getX()
+
     def getNormal(self):
         """
         Returns a new vector that is the normal to this vector

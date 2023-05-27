@@ -1,7 +1,6 @@
 from vec2py.util import DoubleRect, Vector2D
 from vec2py.engine.maths.Constants import Constants
 from vec2py.util.Util import Util
-from vec2py.util.Vector3D import Vector3D
 import math
 
 import inspect
@@ -73,14 +72,13 @@ class Entity:
         elif ma == float('inf'):
             j = ((i+e)*vbp1.dotProduct(n)) / (1/mb + (rbp.cross_product_sp(n)**2/b.moment_of_inertia))
         else:
-            j = (-(1+e)*rel_normal_velocity) / (1/ma + 1/mb + Vector3D.cross_product_2D(rap, n).self_dot_product()/a.moment_of_inertia
-                + Vector3D.cross_product_2D(rbp, n).self_dot_product()/b.moment_of_inertia)
+            j = (-(1+e)*rel_normal_velocity) / (1/ma + 1/mb + rap.cross_product(n)**2/a.moment_of_inertia + rbp.cross_product(n)**2/b.moment_of_inertia)
 
         va2 = va1 + j*n/ma
         vb2 = vb1 - j*n/mb
 
-        wa2 = wa1 + Vector3D.cross_product_2D(rap, j*n).getZ()/a.moment_of_inertia
-        wb2 = wb1 - Vector3D.cross_product_2D(rap, j*n).getZ()/b.moment_of_inertia
+        wa2 = wa1 + rap.cross_product(j*n)/a.moment_of_inertia
+        wb2 = wb1 - rap.cross_product(j*n)/b.moment_of_inertia
 
         a.x_velocity, a.y_velocity = va2.getX(), va2.getY()
         b.x_velocity, b.y_velocity = vb2.getX(), vb2.getY()
