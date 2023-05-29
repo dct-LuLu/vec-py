@@ -191,14 +191,14 @@ class Vector2D:
     @staticmethod
     def cross_product_vec_angle(a: "Vector2D", w: float) -> "Vector2D":
         """
-        Returns the cross product of this vector and the other vector
+        Returns the cross product of : (a.x, a.y, 0) x (0, 0, w)
         """
         return Vector2D(w * a.get_y(), -w * a.get_x())
 
     @staticmethod
     def cross_product_2D(a: "Vector2D", b: "Vector2D") -> float:
         """
-        Returns the cross product of this vector and the other vector
+        Returns the z coordonate of the cross product of : (a.x, a.y, 0) x (b.x, b.y, 0)
         """
         return a.get_x() * b.get_y() - a.get_y() * b.get_x()
 
