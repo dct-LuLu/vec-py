@@ -46,7 +46,6 @@ class Display(Events, pyglet.window.Window):
         for i in CollisionDetection.may_collide:
             a = list(i)
             if len(a) == 2:
-                print("colliding")
                 Entity.agagag_collision(self, *a)
 
             # iterable = iter(i)

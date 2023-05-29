@@ -95,6 +95,9 @@ class Rect(Entity, shapes.Rectangle):
         return [(corners[1] - corners[0]).get_normal().normalize(),
                 (corners[2] - corners[1]).get_normal().normalize()]
 
+    def anti_overlapp(self):
+        pass
+
     def __str__(self):
         return f"Rect(x={self.x}, y={self.y}, width={self.width}, height={self.height}, rotation={self.rotation})"
 

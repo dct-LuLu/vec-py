@@ -84,12 +84,16 @@ class Entity:
         vab = va - vb
         vn = Vector2D.dot_product(vab, n)
 
-        angular_part = Vector2D.dot_product(Vector2D.cross_product_vec_angle(n, ra) * ra / a.moment_of_inertia + 
-                                            Vector2D.cross_product_vec_angle(n, rb) * rb / b.moment_of_inertia, n)
+        if a.mass == float("inf"):
+            j = (-(1 + e) * vn) / ((1/b.mass) + Vector2D.dot_product(Vector2D.cross_product_vec_angle(n, rb) * rb / b.moment_of_inertia, n))
+            print('a inf')
+        elif b.mass == float("inf"):
+            j = (-(1 + e) * vn) / ((1/a.mass) + Vector2D.dot_product(Vector2D.cross_product_vec_angle(n, ra) * ra / a.moment_of_inertia, n))
+            print('b inf')
+        else:
+            j = (-(1 + e) * vn) / ((1/a.mass + 1/b.mass) + Vector2D.dot_product(Vector2D.cross_product_vec_angle(n, ra) * ra / a.moment_of_inertia + 
+                                                                                Vector2D.cross_product_vec_angle(n, rb) * rb / b.moment_of_inertia, n))
 
-        j = (-(1 + e) * vn) / ((1/a.mass + 1/b.mass) + angular_part)
-        if a.mass == float("inf") or b.mass == float("inf"):
-            print("fgeur")
         a.set_velocity(va + (j/a.mass) * n)
         b.set_velocity(vb - (j/b.mass) * n)
 
