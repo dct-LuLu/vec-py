@@ -6,8 +6,8 @@ class Vector2D:
     _TINY_POSITIVE = 1E-10
 
     def __init__(self, x, y):
-        self._x = Util.test_number(x)
-        self._y = Util.test_number(y)
+        self._x = x #Util.test_number(x)
+        self._y = y #Util.test_number(y)
 
     def __str__(self) -> str:
         return str("Vector{x: "+Util.NF(self._x)+", y: "+Util.NF(self._y)+"}") if Util.DEBUG else f"Vector{{x: {self._x}, y: {self._y}}}"
@@ -264,11 +264,11 @@ class Vector2D:
         Returns the dot product of this vector and the other given vector
         """
         R = a.get_x() * b.get_x() + a.get_y() * b.get_y()
-        if isnan(R):
-            if Util.DEBUG:
-                raise ValueError(f"dot product is not a number {a} {b}")
-            else:
-                raise ValueError("")
+        #if isnan(R):
+        #    if Util.DEBUG:
+        #        raise ValueError(f"dot product is not a number {a} {b}")
+        #    else:
+        #        raise ValueError("")
         return R
 
     def get_angle(self) -> float:

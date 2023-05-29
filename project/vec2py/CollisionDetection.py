@@ -164,7 +164,7 @@ class QuadNode:
 class CollisionSAT:
     def routine(self=None):
         CollisionDetection.may_collide = set()
-        for polygons in Util.unique_sets(set(Entity.get_movables())):
+        for polygons in Util.unique_sets(set(Entity.get_entities())):
             if CollisionSAT.collision_check_SAT(*polygons):
                 CollisionDetection.may_collide.add(polygons)
 

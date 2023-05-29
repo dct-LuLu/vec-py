@@ -82,7 +82,7 @@ class Rect(Entity, shapes.Rectangle):
         return Vector2D(self.x, self.y)
 
     def contains(self, point: Vector2D):
-        a, b, _, d= self.get_corners()
+        a, b, _, d = self.get_corners()
 
         am = point - a
         ab = b - a

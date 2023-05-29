@@ -21,8 +21,9 @@ class Solver:
 
         for shape in sup.temp_render_list:
             if shape != sup.drag_object:
-                self.solver.simulate(shape, dt)
-                Walls.check(sup, shape)
+                if not shape.fixed:
+                    Walls.check(sup, shape)
+                    self.solver.simulate(shape, dt)
 
 
 class SemiImplicitEuler:

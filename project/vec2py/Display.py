@@ -21,21 +21,23 @@ class Display(Events, pyglet.window.Window):
         self.solver = Solver()
         Events.__init__(self)
         # self.temp_render_list = [Circ(100, 100, 50, color=(98, 12, 225, 230)), Circ(250, 250, 13, color=(98, 12, 225, 230))]
-        self.temp_render_list = [Rect(400, 300, 150, 100, 15), Rect(150, 250, 100, 25, 30)]
+        walls = [Rect(0, 0, self.window_width, 5, 0, (255, 122, 60, 255), True, False)]
+        self.temp_render_list = [Rect(400, 300, 150, 100, 15), Rect(150, 250, 100, 25, 30)] + walls
 
-        pyglet.clock.schedule_interval(self.remake, 1 / 60.0)
-        pyglet.clock.schedule_interval(self.simulate, 1 / 60.0)
-        setting = "SAT"
+        pyglet.clock.schedule_interval(self.remake, 1 / 120.0)
+        pyglet.clock.schedule_interval(self.simulate, 1 / 120.0)
         setting = "quadtree"
+        setting = "SAT"
         self.collision_detection = CollisionDetection(self.window_width, self.window_height, setting)
         print(f"Collision detection set to {setting}")
 
         pyglet.app.run()
 
     def simulate(self, dt):
+        dt *= 10
         self.solver.simulate(self, dt)
 
-    def remake(self, dt):
+    def remake(self, dt=None):
         self.collision_detection.routine()
         if Util.DEBUG:
             if isinstance(self.collision_detection.system, PolygonMapQuadtree):
@@ -44,6 +46,7 @@ class Display(Events, pyglet.window.Window):
         for i in CollisionDetection.may_collide:
             a = list(i)
             if len(a) == 2:
+                print("colliding")
                 Entity.agagag_collision(self, *a)
 
             # iterable = iter(i)

@@ -58,9 +58,8 @@ class Entity:
 
         a.set_velocity(vap)
         b.set_velocity(vbp)
-
-        a.angular_velocity = a.angular_velocity + Vector2D.cross_product_vec_angle(j*n, a.radius) / ia
-        b.angular_velocity = b.angular_velocity + Vector2D.cross_product_vec_angle(j*n, b.radius) / ib
+        a.angular_velocity += Vector2D.cross_product_vec_angle(j*n, a.radius) / ia
+        b.angular_velocity += Vector2D.cross_product_vec_angle(j*n, b.radius) / ib
 
     @staticmethod
     def agagag_collision(sup, a: "Entity", b: "Entity"):
@@ -89,12 +88,13 @@ class Entity:
                                             Vector2D.cross_product_vec_angle(n, rb) * rb / b.moment_of_inertia, n)
 
         j = (-(1 + e) * vn) / ((1/a.mass + 1/b.mass) + angular_part)
-
+        if a.mass == float("inf") or b.mass == float("inf"):
+            print("fgeur")
         a.set_velocity(va + (j/a.mass) * n)
         b.set_velocity(vb - (j/b.mass) * n)
 
-        a.angular_velocity = a.angular_velocity + Vector2D.cross_product_2D(j*n, rap) / a.moment_of_inertia
-        b.angular_velocity = b.angular_velocity + Vector2D.cross_product_2D(j*n, rbp) / b.moment_of_inertia
+        a.angular_velocity += Vector2D.cross_product_2D(j*n, rap) / a.moment_of_inertia
+        b.angular_velocity += Vector2D.cross_product_2D(j*n, rbp) / b.moment_of_inertia
 
     # to do after this works ^^^ https://www.myphysicslab.com/engine2D/collision-methods-en.html
 

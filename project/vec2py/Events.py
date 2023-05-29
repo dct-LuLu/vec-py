@@ -37,7 +37,6 @@ class Events:
             self.last_speeds.append(Vector2D(dx, dy) * 600)  # dépends BEAUCOUP de DT c'est chiant
 
         if (buttons & mouse.RIGHT) and self.cue_object is not None:
-            self.cue_object.full_stop()
             self.cursor_pos = Vector2D(x, y)
                 
     # AFTER
