@@ -6,7 +6,7 @@ from pyglet import shapes
 
 
 class Circ(Entity, shapes.Circle):
-    def __init__(self, x, y, radius, segments=None, color=(255, 255, 255, 255), fixed=False, maneuverable=True,
+    def __init__(self, x, y, radius, segments=None, rotation=0, color=(255, 255, 255, 255), fixed=False, maneuverable=True,
                  density=0.388, x_velocity=0, y_velocity=0, angular_velocity=0):
         if segments is None:
             self.fixed_segments = False
@@ -14,10 +14,11 @@ class Circ(Entity, shapes.Circle):
             self.fixed_segments = True
         shapes.Circle.__init__(self, x, y, radius, segments, color)
 
-        self.moment_of_inertia = .25 * self.get_mass() * self.radius ** 2  # 0.5?
+        self.rotation = rotation
         self.air_resistance_coefficient = 0.47
         self._squared_radius = radius ** 2  # évite de faire 50 fois la même opération et de faire des racines carrées
         Entity.__init__(self, fixed, maneuverable, density, x_velocity, y_velocity, angular_velocity)
+        self.moment_of_inertia = .25 * self.get_mass() * self.radius ** 2  # 0.5?
 
     @property
     def radius(self):
@@ -60,7 +61,7 @@ class Circ(Entity, shapes.Circle):
         Returns whether the given point is inside the circle
         """
         # ((point.getX()-self.x)**2 + (point.getY()-self.y)**2)
-        return self._squared_radius >= point.distanceSquared(self.get_pos())
+        return self._squared_radius >= Vector2D.distance_squared(point, self.get_pos())
 
 
 if __name__ == "__main__":

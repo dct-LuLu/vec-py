@@ -1,6 +1,7 @@
 from vec2py.util import DoubleRect, Vector2D
 from vec2py.engine.maths.Constants import Constants
 from vec2py.util.Util import Util
+from vec2py.entities import Circ
 import math
 
 import inspect
@@ -30,6 +31,37 @@ class Entity:
         self._net_force = Vector2D(0, 0)
 
         Entity.instances.add(self)
+
+
+    @staticmethod
+    def agagag_collision_circle(a: Circ, b: Circ):
+        print('collisions')
+        e = 0.8
+
+        va = a.get_velocity()
+        vb = b.get_velocity()
+
+        n = ((b.get_pos() - a.get_pos()) * b.radius) / (a.radius + b.radius)
+
+        vab = va - vb
+        vn = Vector2D.dot_product(vab, n)
+
+        ia = a.mass * a.radius ** 2
+        ib = b.mass * b.radius ** 2
+
+        angular_part = Vector2D.dot_product(Vector2D.cross_product_vec_angle(n, a.radius) * a.radius / ia + 
+                                            Vector2D.cross_product_vec_angle(n, b.radius) * b.radius / ib, n)
+
+        j = (-(1 + e) * vn) / (Vector2D.dot_product(n, n) * (1/a.mass + 1/b.mass) + angular_part)
+
+        vap = va + (j/a.mass) * n
+        vbp = vb - (j/b.mass) * n
+
+        a.set_velocity(vap)
+        b.set_velocity(vbp)
+
+        a.angular_velocity = a.angular_velocity + Vector2D.cross_product_vec_angle(j*n, a.radius) / ia
+        b.angular_velocity = b.angular_velocity + Vector2D.cross_product_vec_angle(j*n, b.radius) / ib
 
     @staticmethod
     def agagag_collision(sup, a, b):
@@ -85,8 +117,8 @@ class Entity:
         wa2 = wa1 + Vector2D.cross_product_2D(rap, j * n) / a.moment_of_inertia
         wb2 = wb1 - Vector2D.cross_product_2D(rap, j * n) / b.moment_of_inertia
 
-        a.x_velocity, a.y_velocity = va2.get_x(), va2.get_y()
-        b.x_velocity, b.y_velocity = vb2.get_x(), vb2.get_y()
+        a.set_velocity(va2)
+        b.set_velocity(vb2)
 
         a.angular_velocity = wa2
         b.angular_velocity = wb2
@@ -161,6 +193,10 @@ class Entity:
 
     def get_velocity(self) -> Vector2D:
         return Vector2D(self.x_velocity, self.y_velocity)
+
+    def set_velocity(self, vector: Vector2D) -> None:
+        self.x_velocity = vector.get_x()
+        self.y_velocity = vector.get_y()
 
     def full_stop(self):
         self.internal_forces = {}

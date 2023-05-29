@@ -16,8 +16,8 @@ class Solver:
     def simulate(self, sup, dt):
        
         # c'est de pire en pire va savoir pk tout pue la chiasse avec le dt je vais me pendre
-        force = 10
-        dt *= force
+        # force = 10
+        # dt *= force
 
         for shape in sup.temp_render_list:
             if shape != sup.drag_object:
@@ -28,7 +28,7 @@ class Solver:
 class SemiImplicitEuler:
     @staticmethod
     def simulate(shape, dt):
-        shape.internal_forces["G"] = Constants.GRAVITY * shape.mass
+        shape.internal_forces["G"] = Constants.GRAVITY
         shape.internal_forces["r"] = Vector2D(shape.x_velocity,
                                               shape.y_velocity) * -shape.air_resistance_coefficient * dt
         shape.apply_net_forces()
@@ -48,7 +48,7 @@ class Verlet:
     @staticmethod
     def simulate(shape, dt):
         # Calcul des forces internes
-        shape.internal_forces["G"] = Constants.GRAVITY * shape.mass
+        shape.internal_forces["G"] = Constants.GRAVITY
         shape.internal_forces["r"] = Vector2D(shape.x_velocity,
                                               shape.y_velocity) * -shape.air_resistance_coefficient * dt
         shape.apply_net_forces()

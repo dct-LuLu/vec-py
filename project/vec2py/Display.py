@@ -20,13 +20,13 @@ class Display(Events, pyglet.window.Window):
 
         self.solver = Solver()
         Events.__init__(self)
-        # self.temp_render_list = [Circ(100, 100, 50, None, (98, 12, 225, 230)), Circ(200, 200, 13, None, (98, 12, 225, 230))]
-        self.temp_render_list = [Rect(400, 300, 150, 100, 15), Rect(150, 250, 100, 25, 30)]
+        self.temp_render_list = [Circ(100, 100, 50, color=(98, 12, 225, 230)), Circ(250, 250, 13, color=(98, 12, 225, 230))]
+        # self.temp_render_list = [Rect(400, 300, 150, 100, 15), Rect(150, 250, 100, 25, 30)]
 
         pyglet.clock.schedule_interval(self.remake, 1 / 60.0)
         pyglet.clock.schedule_interval(self.simulate, 1 / 60)
-        setting = "quadtree"
         setting = "SAT"
+        setting = "quadtree"
         self.collision_detection = CollisionDetection(self.window_width, self.window_height, setting)
         print(f"Collision detection set to {setting}")
 
@@ -41,19 +41,25 @@ class Display(Events, pyglet.window.Window):
             if isinstance(self.collision_detection.system, PolygonMapQuadtree):
                 self.quad_render = self.collision_detection.system.get_debug_lines()
 
-            for i in CollisionDetection.may_collide:
-                a = list(i)
-                if len(a) == 2:
-                    Entity.agagag_collision(self, *a)
+            # for i in CollisionDetection.may_collide:
+            #     a = list(i)
+            #     if len(a) == 2:
+            #         Entity.agagag_collision(self, *a)
 
-                iterable = iter(i)
+            #     iterable = iter(i)
 
-                string = "Collision between " + str(next(iterable))
+            #     string = "Collision between " + str(next(iterable))
 
-                for _ in iterable:
-                    string += " and " + str(_)
+            #     for _ in iterable:
+            #         string += " and " + str(_)
 
-                print(string)
+            #     print(string)
+
+            if Display.collision_check(self.temp_render_list[0], self.temp_render_list[1]):
+                Entity.agagag_collision_circle(self.temp_render_list[0], self.temp_render_list[1])
+
+    def collision_check(a, b) -> bool:
+        return (a.x-b.x)**2 + (a.y-b.y)**2 <= (a.radius + b.radius)**2
 
     def on_draw(self):
         self.clear()
