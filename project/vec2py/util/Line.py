@@ -5,7 +5,7 @@ from pyglet import shapes
 
 class Line(shapes.Line):
     def __init__(self, p1: Vector2D, p2: Vector2D, color=0):
-        shapes.Line.__init__(self, p1.get_x(), p1.get_y(), p2.get_x(), p2.get_y())
+        shapes.Line.__init__(self, p1.get_x(), p1.get_y(), p2.get_x(), p2.get_y(), color=color)
 
     def get_p1(self) -> Vector2D:
         """

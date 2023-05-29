@@ -1,6 +1,6 @@
 from vec2py.util import DoubleRect, Vector2D
 from vec2py.engine.maths.Constants import Constants
-from vec2py.util.Util import Util
+from vec2py.util import Line
 from vec2py.entities import Circ
 import math
 
@@ -35,7 +35,6 @@ class Entity:
 
     @staticmethod
     def agagag_collision_circle(a: Circ, b: Circ):
-        print('collisions')
         e = 0.8
 
         va = a.get_velocity()
@@ -64,79 +63,52 @@ class Entity:
         b.angular_velocity = b.angular_velocity + Vector2D.cross_product_vec_angle(j*n, b.radius) / ib
 
     @staticmethod
-    def agagag_collision(sup, a, b):
+    def agagag_collision(sup, a: "Entity", b: "Entity"):
         # https://www.myphysicslab.com/engine2D/collision-en.html#resting_contact
         e = 0.8
         P, perf_obj = Entity.get_col(a, b)
 
-        ma, mb = a.mass, b.mass
+        if P == None:
+            return
 
-        rap = Vector2D(P.get_x() - a.x, P.get_y() - a.y)
-        rbp = Vector2D(P.get_x() - b.x, P.get_y() - b.y)
+        rap = P - a.get_pos()
+        rbp = P - b.get_pos()
 
-        wa1, wb1 = a.angular_velocity, b.angular_velocity
-        wa2, wb2 = None, None  # WHAT WE WANT
+        ra = rap.get_norm()
+        rb = rbp.get_norm()
 
-        va1, vb1 = Vector2D(a.x_velocity, a.y_velocity), Vector2D(b.x_velocity, b.y_velocity)
-        va2, vb2 = None, None  # WHAT WE WANT
+        va = a.get_velocity()
+        vb = b.get_velocity()
 
         n = perf_obj.get_perfored_vector(P).get_perpendicular_unit_vector()
 
-        #####
+        vab = va - vb
+        vn = Vector2D.dot_product(vab, n)
 
-        # relative my ass
+        angular_part = Vector2D.dot_product(Vector2D.cross_product_vec_angle(n, ra) * ra / a.moment_of_inertia + 
+                                            Vector2D.cross_product_vec_angle(n, rb) * rb / b.moment_of_inertia, n)
 
-        vap1 = va1 + Vector2D.cross_product_vec_angle(rap, wa1)
-        vbp1 = vb1 + Vector2D.cross_product_vec_angle(rbp, wb1)
-        # vap2 = va2 + Vector2D.cross_product_sp(rap, wa2)
-        # vbp2 = vb2 + Vector2D.cross_product_sp(rbp, wb2)
+        j = (-(1 + e) * vn) / ((1/a.mass + 1/b.mass) + angular_part)
 
-        vab1 = vap1 - vbp1
-        # vab2 = vap2 - vbp2
+        a.set_velocity(va + (j/a.mass) * n)
+        b.set_velocity(vb - (j/b.mass) * n)
 
-        rel_normal_velocity = Vector2D.dot_product(vab1, n)
-
-        # vab2.dotProduct(n) = -e * rel_normal_velocity
-
-        if mb == float('inf') or b == sup.drag_object:
-            print("COLLISION WITH IMMOVABLE")
-            j = (-(1 + e) * Vector2D.dot_product(vap1, n)) / (
-                    1 / ma + (Vector2D.cross_product_2D(rap, n) ** 2 / a.moment_of_inertia))
-        elif ma == float('inf') or a == sup.drag_object:
-            print("COLLISION WITH IMMOVABLE")
-            j = ((1 + e) * Vector2D.dot_product(vbp1, n)) / (
-                    1 / mb + (Vector2D.cross_product_2D(rbp, n) ** 2 / b.moment_of_inertia))
-        else:
-            j = (-(1 + e) * rel_normal_velocity) / (1 / ma + 1 / mb + Vector2D.cross_product_2D(rap,
-                                                                                                n) ** 2 / a.moment_of_inertia + Vector2D.cross_product_2D(
-                rbp, n) ** 2 / b.moment_of_inertia)
-
-        va2 = va1 + j * n / ma
-        vb2 = vb1 - j * n / mb
-
-        wa2 = wa1 + Vector2D.cross_product_2D(rap, j * n) / a.moment_of_inertia
-        wb2 = wb1 - Vector2D.cross_product_2D(rap, j * n) / b.moment_of_inertia
-
-        a.set_velocity(va2)
-        b.set_velocity(vb2)
-
-        a.angular_velocity = wa2
-        b.angular_velocity = wb2
+        a.angular_velocity = a.angular_velocity + Vector2D.cross_product_2D(j*n, rap) / a.moment_of_inertia
+        b.angular_velocity = b.angular_velocity + Vector2D.cross_product_2D(j*n, rbp) / b.moment_of_inertia
 
     # to do after this works ^^^ https://www.myphysicslab.com/engine2D/collision-methods-en.html
 
     @staticmethod
     def get_col(a, b):
         for corner in a.get_corners():
-            print(corner)
-            if b.is_point_inside(corner):
-                return corner, a
-        print("----")
-        for corner in b.get_corners():
-            print(corner)
-            if a.is_point_inside(corner):
+            if b.contains(corner):
                 return corner, b
-        raise Exception("No collision")
+
+        for corner in b.get_corners():
+            if a.contains(corner):
+                return corner, a
+
+        return None, None
 
     def collision(self, other):
         # Calcul des vitesses de collision

@@ -10,10 +10,10 @@ class Vector2D:
         self._y = Util.test_number(y)
 
     def __str__(self) -> str:
-        return str("Vector{x: "+Util.NF(self._x)+", y: "+Util.NF(self._y)+"}") if Util.DEBUG else str()
+        return str("Vector{x: "+Util.NF(self._x)+", y: "+Util.NF(self._y)+"}") if Util.DEBUG else f"Vector{{x: {self._x}, y: {self._y}}}"
     
     def __repr__(self) -> str:
-        return str("Vector{x: "+Util.NF(self._x)+", y: "+Util.NF(self._y)+"}") if Util.DEBUG else str()
+        return str(self)
 
     def __eq__(self, __o: "Vector2D") -> bool:
         """
@@ -211,11 +211,14 @@ class Vector2D:
     def get_perpendicular_unit_vector(self):
         return self.normalize().get_normal()
 
+    def get_norm(self):
+        return sqrt(self._x ** 2 + self._y ** 2)
+
     def normalize(self):
         """
         Normalizes this vector to have length 1
         """
-        norm = sqrt(self._x ** 2 + self._y ** 2)
+        norm = self.get_norm()
         return Vector2D(self._x / norm, self._y / norm)
 
     @staticmethod
@@ -250,6 +253,10 @@ class Vector2D:
         """
         return Util.near_equal(Vector2D.distance(segment_start, point) + Vector2D.distance(point, segment_end),
                                Vector2D.distance(segment_start, segment_end))
+
+    @staticmethod
+    def distance_from_segment(segment_start, segment_end, point):
+        return Vector2D.distance(segment_start, point) + Vector2D.distance(point, segment_end) - Vector2D.distance(segment_start, segment_end)
 
     @staticmethod
     def dot_product(a: "Vector2D", b: "Vector2D") -> float:

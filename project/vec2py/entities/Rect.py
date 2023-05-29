@@ -45,19 +45,21 @@ class Rect(Entity, shapes.Rectangle):
 
         return a, b, c, d
 
-    def get_perfored_vector(self, p):
-        a, b, c, d = self.get_corners()
+    def get_perfored_vector(self, p) -> Vector2D:
+        corners = self.get_corners()
 
-        if Vector2D.is_point_on_segment(a, b, p):
-            return a - b
+        mini = Vector2D.distance_from_segment(corners[0], corners[1], p)
+        vector = corners[0] - corners[1]
 
-        if Vector2D.is_point_on_segment(b, c, p):
-            return b - c
+        for i in range(1, len(corners)):
+            j = i + 1 if i != len(corners) - 1 else 0
 
-        if Vector2D.is_point_on_segment(c, d, p):
-            return c - d
+            a = Vector2D.distance_from_segment(corners[i], corners[j], p)
+            if a < mini:
+                mini = a
+                vector = corners[i] - corners[j]
 
-        raise Exception('Unreachable code')
+        return vector
 
     def get_min_max(self):
         a, b, c, d = self.get_corners()
@@ -80,44 +82,13 @@ class Rect(Entity, shapes.Rectangle):
         return Vector2D(self.x, self.y)
 
     def contains(self, point: Vector2D):
-        return self.x - self.width / 2 <= point.get_x() <= self.x + self.width / 2 \
-            and self.y - self.height / 2 <= point.get_y() <= self.y + self.height / 2
+        a, b, _, d= self.get_corners()
 
-    def is_point_inside(self, point, error_factor=1):
-        # Translate the point and rectangle corners to the origin
-        a, _, _, _ = self.get_corners()
-        translated_point = Vector2D(point.get_x() - a.get_x(), point.get_y() - a.get_y())
-        translated_corners = [
-            Vector2D(corner.get_x() - a.get_x(), corner.get_y() - a.get_y())
-            for corner in self.get_corners()
-        ]
+        am = point - a
+        ab = b - a
+        ad = d - a
 
-        # Rotate the point and rectangle corners by the negative of the rectangle's rotation angle
-        rotated_point = Vector2D(
-            translated_point.get_x() * cos(-self.rotation) - translated_point.get_y() * sin(-self.rotation),
-            translated_point.get_x() * sin(-self.rotation) + translated_point.get_y() * cos(-self.rotation)
-        )
-        rotated_corners = [
-            Vector2D(
-                corner.get_x() * cos(-self.rotation) - corner.get_y() * sin(-self.rotation),
-                corner.get_x() * sin(-self.rotation) + corner.get_y() * cos(-self.rotation)
-            )
-            for corner in translated_corners
-        ]
-
-        # Check if the rotated point is within the rectangle, considering the error factor
-        min_x = min(corner.get_x() for corner in rotated_corners)
-        max_x = max(corner.get_x() for corner in rotated_corners)
-        min_y = min(corner.get_y() for corner in rotated_corners)
-        max_y = max(corner.get_y() for corner in rotated_corners)
-
-        if (
-                min_x - error_factor <= rotated_point.get_x() <= max_x + error_factor and
-                min_y - error_factor <= rotated_point.get_y() <= max_y + error_factor
-        ):
-            return True
-
-        return False
+        return 0 < Vector2D.dot_product(am, ab) < Vector2D.dot_product(ab, ab) and 0 < Vector2D.dot_product(am, ad) < Vector2D.dot_product(ad, ad)
 
     def get_axes_SAT(self) -> list[Vector2D]:
         corners = self.get_corners()
