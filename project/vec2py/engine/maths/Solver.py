@@ -21,7 +21,7 @@ class Solver:
 
         for shape in sup.temp_render_list:
             if shape != sup.drag_object:
-                if not shape.fixed:
+                if not shape.is_static:
                     Walls.check(sup, shape)
                     self.solver.simulate(shape, dt)
 

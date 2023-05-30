@@ -6,7 +6,7 @@ from pyglet import shapes
 
 
 class Rect(Entity, shapes.Rectangle):
-    def __init__(self, x, y, width, height, rotation=0, color=(255, 255, 255, 255), fixed=False, maneuverable=True,
+    def __init__(self, x, y, width, height, rotation=0, color=(255, 255, 255, 255), is_static=False, maneuverable=True,
                  density=0.388, x_velocity=0, y_velocity=0, angular_velocity=0):
         shapes.Rectangle.__init__(self, x, y, width, height, color)
         self.rotation = rotation
@@ -14,7 +14,7 @@ class Rect(Entity, shapes.Rectangle):
         self.needUpdate = True
         self.air_resistance_coefficient = 1.05
 
-        Entity.__init__(self, fixed, maneuverable, density, x_velocity, y_velocity, angular_velocity)
+        Entity.__init__(self, is_static, maneuverable, density, x_velocity, y_velocity, angular_velocity)
 
         self.moment_of_inertia = 1 / 12 * self.get_mass() * (self.width ** 2 + self.height ** 2)
 

@@ -10,18 +10,18 @@ import inspect
 class Entity:
     instances: set = set()
 
-    def __init__(self, fixed=False, maneuverable=True, density=0.388, x_velocity=0, y_velocity=0, angular_velocity=0):
-        self.fixed = fixed  # Si l'entité est fixe (ne bouge pas)
+    def __init__(self, is_static=False, maneuverable=True, density=0.388, x_velocity=0, y_velocity=0, angular_velocity=0):
+        self.is_static = is_static  # Si l'entité est fixe (ne bouge pas)
         self.maneuverable = maneuverable  # Si l'entité peut être contrôlée par le joueur
 
-        self.density = density if not fixed else float('inf')  # La densité de l'entité
+        self.density = density if not is_static else float('inf')  # La densité de l'entité
 
         self.area = self.get_area()  # L'aire de l'entité
-        self.mass = self.get_mass() if not fixed else float('inf')  # La masse de l'entité
+        self.mass = self.get_mass() if not is_static else float('inf')  # La masse de l'entité
 
-        self.x_velocity = x_velocity if not fixed else 0
+        self.x_velocity = x_velocity if not is_static else 0
 
-        self.y_velocity = y_velocity if not fixed else 0
+        self.y_velocity = y_velocity if not is_static else 0
 
         self.angular_velocity = angular_velocity
         self.angular_acceleration = 0
@@ -97,8 +97,9 @@ class Entity:
         a.set_velocity(va + (j/a.mass) * n)
         b.set_velocity(vb - (j/b.mass) * n)
 
-        a.angular_velocity += Vector2D.cross_product_2D(j*n, rap) / a.moment_of_inertia
-        b.angular_velocity += Vector2D.cross_product_2D(j*n, rbp) / b.moment_of_inertia
+        jn = j*n
+        a.angular_velocity += Vector2D.cross_product_2D(jn, rap) / a.moment_of_inertia
+        b.angular_velocity += Vector2D.cross_product_2D(jn, rbp) / b.moment_of_inertia
 
     # to do after this works ^^^ https://www.myphysicslab.com/engine2D/collision-methods-en.html
 
@@ -188,7 +189,7 @@ class Entity:
 
     @classmethod
     def get_movables(cls):
-        return [entity for entity in cls.instances if not entity.fixed]
+        return [entity for entity in cls.instances if not entity.is_static]
 
     def get_AABB(self) -> DoubleRect:
         raise Exception(f'{inspect.stack()[0][3]}() is not implemented for the class: {self.__class__} ')

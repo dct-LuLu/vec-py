@@ -116,7 +116,21 @@ class Util:
 
         return abs(a - b) < epsilon * max(abs(a), abs(b))
 
+    @staticmethod
+    def clamp(value: float, v_min: float, v_max: float):
+        if v_min == v_max:
+            return v_min
+        if min > max:
+            raise Exception("min is greater than the max.")
+        if value < min:
+            return min
+        if value > max:
+            return max
+
+
+
     NF = nf5  # alias, base format number
+
 
 
 if __name__ == "__main__":

@@ -6,7 +6,7 @@ from pyglet import shapes
 
 
 class Circ(Entity, shapes.Circle):
-    def __init__(self, x, y, radius, segments=None, rotation=0, color=(255, 255, 255, 255), fixed=False, maneuverable=True,
+    def __init__(self, x, y, radius, segments=None, rotation=0, color=(255, 255, 255, 255), is_static=False, maneuverable=True,
                  density=0.388, x_velocity=0, y_velocity=0, angular_velocity=0):
         if segments is None:
             self.fixed_segments = False
@@ -17,7 +17,7 @@ class Circ(Entity, shapes.Circle):
         self.rotation = rotation
         self.air_resistance_coefficient = 0.47
         self._squared_radius = radius ** 2  # évite de faire 50 fois la même opération et de faire des racines carrées
-        Entity.__init__(self, fixed, maneuverable, density, x_velocity, y_velocity, angular_velocity)
+        Entity.__init__(self, is_static, maneuverable, density, x_velocity, y_velocity, angular_velocity)
         self.moment_of_inertia = .25 * self.get_mass() * self.radius ** 2  # 0.5?
 
     @property
@@ -49,6 +49,12 @@ class Circ(Entity, shapes.Circle):
         Returns the position of the circle as a Vector
         """
         return Vector2D(self.x, self.y)
+
+    def get_axes_SAT(self) -> list[Vector2D]:
+        return []
+
+    def get_corners(self) -> tuple[Vector2D, Vector2D]:
+        return [Vector2D(self._x, self._y)]
 
     def get_AABB(self):
         """
