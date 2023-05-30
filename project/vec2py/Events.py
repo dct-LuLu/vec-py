@@ -1,7 +1,9 @@
-from pyglet.window import mouse
+from pyglet.window import mouse, key
 from vec2py.entities.Entity import Entity
 from vec2py.util.Vector2D import Vector2D
-
+from vec2py.util.Util import Util
+from vec2py.engine.maths.Solver import Solver
+from vec2py.engine.maths.CollisionHandler import CollisionHandler
 
 class Events:
     def __init__(self):
@@ -53,7 +55,36 @@ class Events:
             self.cue_object.internal_forces["Q"] = Vector2D(self.cue_object.x - x, self.cue_object.y - y) * 5
             self.cue_object = None
 
+    def cue_line_update(self):
+        """Dessine la ligne de visée"""
+        if self.cue_object is not None:
+            self.cue_line.x = self.cue_object.x
+            self.cue_line.y = self.cue_object.y
+            self.cue_line.x2 = self.cursor_pos.get_x()
+            self.cue_line.y2 = self.cursor_pos.get_y()
+            self.cue_line.visible = True
+        else:
+            self.cue_line.visible = False
 
-    def on_key_press(symbol, modifiers=None):
-        pass
-        #if symbol == key.LCTRL or 
+    def on_key_press(self, symbol, modifiers=None):
+        if symbol in (key.LCTRL, key.RCTRL):
+            Util.DEBUG = not Util.DEBUG
+            str = "ON" if Util.DEBUG else "OFF"
+            print("\033cDEBUG MODE "+str)
+        elif symbol == key.TAB:
+            self.pannel_visible = not self.pannel_visible
+        elif symbol in (key.LSHIFT,key.RSHIFT):
+            if self.speed_force == 1:
+                self.speed_force = 10
+            else:
+                self.speed_force = 1
+        elif symbol == key.SPACE:
+            if self.solver.setting != "ellastic":
+                self.solver = Solver("ellastic")
+                self.collision_handler = CollisionHandler("ellastic")
+            else:
+                self.solver = Solver(self.default_solver)
+                self.collision_handler = CollisionHandler(self.default_handler)
+        elif symbol == key.ENTER:
+            #spawn shape
+            pass

@@ -16,8 +16,8 @@ class PolygonMapQuadtree:
     _MAX_NODES = int((4 ** (_MAX_DEPTH + 1) - 1) / 3)
     PRE_CACHED_BOUNDS = {}
 
-    if Util.DEBUG:
-        debug_squares = set()
+    debug_squares = set()
+    debug_lines = set()
 
     def __init__(self, window_width, window_height):
         self._root = None
@@ -69,13 +69,17 @@ class PolygonMapQuadtree:
     def routine(self):
         CollisionDetection.may_collide = set()
 
-        if Util.DEBUG:
-            PolygonMapQuadtree.debug_squares = set()
+        PolygonMapQuadtree.debug_squares = set()
+        PolygonMapQuadtree.debug_lines = set()
 
         self._root = QuadNode(PolygonMapQuadtree._MAX_NODES)
 
         for polygon in Entity.get_movables():
             self._root.insert(polygon)
+
+        if Util.DEBUG:
+            PolygonMapQuadtree.debug_lines = set(self.get_debug_lines())
+
 
     def get_debug_lines(self, a=None):
         r = []

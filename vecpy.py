@@ -613,11 +613,11 @@ class Projection:
 def projectShapeOntoAxis(shape: Rect, axis: Vector2D):
     vertices = shape.get_corners()
 
-    min = axis.dotProduct(Vector2D(vertices[0][0], vertices[0][1]))
+    min = axis.dot_product(Vector2D(vertices[0][0], vertices[0][1]))
     max = min
 
     for vertice in vertices[1:]:
-        p = axis.dotProduct(Vector2D(vertice[0], vertice[1]))
+        p = axis.dot_product(Vector2D(vertice[0], vertice[1]))
 
         if p < min:
             min = p
@@ -682,7 +682,7 @@ def collisionSATWithAntiOverlap(shape_a: Rect, shape_b: Rect):
 
     dir = Vector2D(shape_b.x - shape_a.x, shape_b.y - shape_a.y)
 
-    if (overlap.dotProduct(dir) > 0):
+    if (overlap.dot_product(dir) > 0):
         overlap = overlap.multiply(-1)
 
     return overlap

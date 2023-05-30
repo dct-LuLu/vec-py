@@ -1,25 +1,34 @@
 from vec2py.engine.Walls import Walls
 from vec2py.engine.maths.Constants import Constants
 from vec2py.util import Vector2D
+from vec2py.entities.Entity import Entity
 
 
 class Solver:
     def __init__(self, setting="euler"):
-        match setting:
+        self.setting = setting
+        match self.setting:
             case "euler":
                 self.solver = SemiImplicitEuler
             case "verlet":
                 self.solver = Verlet
+            case "ellastic":
+                self.solver = Ellastic
             case _:
                 raise Exception("Invalid solver setting")
 
     def step(self, sup, dt):
-        for shape in sup.temp_render_list:
+        for shape in Entity.get_movables():
             if shape != sup.drag_object:
-                if not shape.is_static:
-                    Walls.check(sup, shape)
-                    self.solver.step(shape, dt)
+                Walls.check(sup, shape)
+                self.solver.step(shape, dt)
 
+class Ellastic:
+    @staticmethod
+    def step(shape, dt):
+        shape.x += shape.x_velocity * dt
+        shape.y += shape.y_velocity * dt
+        shape.rotation += shape.angular_velocity * dt
 
 class SemiImplicitEuler:
     @staticmethod

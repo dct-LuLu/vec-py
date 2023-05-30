@@ -1,7 +1,6 @@
 from vec2py.util import DoubleRect, Vector2D
 from vec2py.engine.maths.Constants import Constants
-from vec2py.util import Line
-from vec2py.entities import Circ
+from vec2py.util import Util
 import math
 
 import inspect
@@ -39,53 +38,6 @@ class Entity:
         self.dynamic_friction = 0.4
 
         Entity.instances.add(self)
-
-    def collision(self, other):
-        # Calcul des vitesses de collision
-        relative_velocity_x = other.x_velocity - self.x_velocity
-        relative_velocity_y = other.y_velocity - self.y_velocity
-
-        # Calcul de l'angle d'impact
-        collision_angle = math.atan2(other.y - self.y, other.x - self.x)
-
-        # Calcul des vitesses tangentielles
-        tangential_velocity1 = -self.angular_velocity * math.sin(collision_angle) * self.moment_of_inertia
-        tangential_velocity2 = other.angular_velocity * math.sin(collision_angle) * other.moment_of_inertia
-
-        # Calcul des vitesses normales
-        normal_velocity1 = (relative_velocity_x * math.cos(collision_angle) +
-                            relative_velocity_y * math.sin(collision_angle)) * self.mass
-        normal_velocity2 = (relative_velocity_x * math.cos(collision_angle) +
-                            relative_velocity_y * math.sin(collision_angle)) * other.mass
-
-        # Calcul des nouvelles vitesses normales après collision
-        new_normal_velocity1 = (normal_velocity1 * (self.mass - other.mass) +
-                                2 * other.mass * normal_velocity2) / (self.mass + other.mass)
-        new_normal_velocity2 = (normal_velocity2 * (other.mass - self.mass) +
-                                2 * self.mass * normal_velocity1) / (self.mass + other.mass)
-
-        # Calcul des nouvelles vitesses angulaires après collision
-        self.angular_velocity = (self.angular_velocity * (self.moment_of_inertia - other.moment_of_inertia) +
-                                 2 * other.moment_of_inertia * other.angular_velocity) / (
-                                        self.moment_of_inertia + other.moment_of_inertia)
-        other.angular_velocity = (other.angular_velocity * (other.moment_of_inertia - self.moment_of_inertia) +
-                                  2 * self.moment_of_inertia * self.angular_velocity) / (
-                                         self.moment_of_inertia + other.moment_of_inertia)
-
-        # Mise à jour des vitesses des objets après collision
-
-        vx1 = (new_normal_velocity1 * math.cos(collision_angle) -
-               tangential_velocity1 * math.sin(collision_angle)) / self.mass
-        vy1 = (new_normal_velocity1 * math.sin(collision_angle) +
-               tangential_velocity1 * math.cos(collision_angle)) / self.mass
-
-        vx2 = (new_normal_velocity2 * math.cos(collision_angle) -
-               tangential_velocity2 * math.sin(collision_angle)) / other.mass
-        vy2 = (new_normal_velocity2 * math.sin(collision_angle) +
-               tangential_velocity2 * math.cos(collision_angle)) / other.mass
-
-        self.external_forces['C'] = Vector2D(vx1, vy1)
-        other.external_forces['C'] = Vector2D(vx2, vy2)
 
     def apply_net_forces(self):
         self._net_force = Vector2D(0, 0)
