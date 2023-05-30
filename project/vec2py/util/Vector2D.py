@@ -30,14 +30,13 @@ class Vector2D:
         if isinstance(other, Vector2D):
             return Vector2D(self._x * other.get_x(), self._y * other.get_y())
 
-        elif isinstance(other, float) or isinstance(other, int):
+        if isinstance(other, float) or isinstance(other, int):
             if other == 1:
                 return self
-            else:
-                return Vector2D(self._x*other, self._y*other)
 
-        else:
-            raise NotImplementedError(f"cannot multiply vector by {other}")  
+            return Vector2D(self._x*other, self._y*other)
+
+        raise NotImplementedError(f"cannot multiply vector by {other}")  
         
     def __rmul__(self, other) -> "Vector2D":
         """
@@ -52,14 +51,13 @@ class Vector2D:
         if isinstance(other, Vector2D):
             return Vector2D(self._x + other.get_x(), self._y + other.get_y())
         
-        elif isinstance(other, float) or isinstance(other, int):
+        if isinstance(other, float) or isinstance(other, int):
             if other == 0:
                 return self
-            else:
-                return Vector2D(self._x + other, self._y + other)
-            
-        else:
-            raise NotImplementedError(f"cannot add vector to {other}")
+
+            return Vector2D(self._x + other, self._y + other)
+
+        raise NotImplementedError(f"cannot add vector to {other}")
         
     def __radd__(self, other) -> "Vector2D":
         """
@@ -73,15 +71,14 @@ class Vector2D:
         """
         if isinstance(other, Vector2D):
             return Vector2D(self._x - other.get_x(), self._y - other.get_y())
-        
-        elif isinstance(other, float) or isinstance(other, int):
+
+        if isinstance(other, float) or isinstance(other, int):
             if other == 0:
                 return self
-            else:
-                return Vector2D(self._x - other, self._y - other)
-            
-        else:
-            raise NotImplementedError(f"cannot subtract {other} from vector")
+
+            return Vector2D(self._x - other, self._y - other)
+
+        raise NotImplementedError(f"cannot subtract {other} from vector")
 
     def __rsub__(self, other) -> "Vector2D":
         """
@@ -96,16 +93,16 @@ class Vector2D:
         if isinstance(other, Vector2D):
             return Vector2D(self._x / other.get_x(), self._y / other.get_y())
         
-        elif isinstance(other, float) or isinstance(other, int):
+        if isinstance(other, float) or isinstance(other, int):
             if other == 1:
                 return self
-            elif other < self._TINY_POSITIVE:
+
+            if other < self._TINY_POSITIVE:
                 raise ValueError(f"cannot divide by near zero {Util.NFE(other)}")
-            else:
-                return Vector2D(self._x / other, self._y / other)
-            
-        else:
-            raise NotImplementedError(f"cannot divide vector by {other}")
+
+            return Vector2D(self._x / other, self._y / other)
+
+        raise NotImplementedError(f"cannot divide vector by {other}")
 
     def __rtruediv__(self, other) -> "Vector2D":
         """
@@ -120,16 +117,16 @@ class Vector2D:
         if isinstance(other, Vector2D):
             return Vector2D(self._x // other.get_x(), self._y // other.get_y())
         
-        elif isinstance(other, float) or isinstance(other, int):
+        if isinstance(other, float) or isinstance(other, int):
             if other == 1:
                 return self
-            elif other < self._TINY_POSITIVE:
+
+            if other < self._TINY_POSITIVE:
                 raise ValueError(f"cannot divide by near zero {Util.NFE(other)}")
-            else:
-                return Vector2D(self._x // other, self._y // other)
-            
-        else:
-            raise NotImplementedError(f"cannot divide vector by {other}")
+
+            return Vector2D(self._x // other, self._y // other)
+
+        raise NotImplementedError(f"cannot divide vector by {other}")
         
     def __rfloordiv__(self, other) -> "Vector2D":
         """
@@ -144,14 +141,13 @@ class Vector2D:
         if isinstance(other, Vector2D):
             return Vector2D(self._x ** other.get_x(), self._y ** other.get_y())
         
-        elif isinstance(other, float) or isinstance(other, int):
+        if isinstance(other, float) or isinstance(other, int):
             if other == 1:
                 return self
-            else:
-                return Vector2D(self._x ** other, self._y ** other)
-            
-        else:
-            raise NotImplementedError(f"cannot raise vector to {other}")
+
+            return Vector2D(self._x ** other, self._y ** other)
+
+        raise NotImplementedError(f"cannot raise vector to {other}")
         
     def __rpow__(self, other) -> "Vector2D":
         """
@@ -170,23 +166,6 @@ class Vector2D:
         Returns the y-coordinate of this vector
         """
         return self._y
-
-    # CROSS PRODUCT LOGIC
-    # [x, y, 0] # vector
-    # [0, 0, w] # angle
-    # cx = y * w - 0 * 0 = y * w
-    # cy = 0 * 0 - x * w = -x * w
-    # cz = x * 0 - y * 0 = 0
-    # -> [yw, -xw, 0]
-    # returns a vector
-
-    # [x, y, 0] # vector
-    # [t, v, 0] # vector
-    # cx = y * 0 - 0 * v = 0
-    # cy = 0 * t - x * 0 = 0
-    # cz = x * v - y * t = xv - yt
-    # -> [0, 0, xv - yt]
-    # returns a value
 
     @staticmethod
     def cross_product_vec_angle(a: "Vector2D", w: float) -> "Vector2D":
@@ -211,14 +190,21 @@ class Vector2D:
     def get_perpendicular_unit_vector(self):
         return self.normalize().get_normal()
 
-    def get_norm(self):
-        return sqrt(self._x ** 2 + self._y ** 2)
+    def get_norm_squared(self) -> float:
+        return self._x ** 2 + self._y ** 2
 
-    def normalize(self):
+    def get_norm(self) -> float:
+        return sqrt(self.get_norm_squared())
+
+    def normalize(self) -> "Vector2D":
         """
         Normalizes this vector to have length 1
         """
         norm = self.get_norm()
+
+        if norm == 0:
+            return Vector2D(0, 0)
+
         return Vector2D(self._x / norm, self._y / norm)
 
     @staticmethod

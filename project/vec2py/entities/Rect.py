@@ -93,8 +93,9 @@ class Rect(Entity, shapes.Rectangle):
         axes = [(corners[1] - corners[0]).get_normal().normalize(),
                 (corners[2] - corners[1]).get_normal().normalize()]
 
-        Util.LINES.append(Line((corners[0] + corners[1]) / 2, (corners[0] + corners[1]) / 2 + axes[0] * 15, (255,0,0,255)))
-        Util.LINES.append(Line((corners[1] + corners[2]) / 2, (corners[1] + corners[2]) / 2 + axes[1] * 15, (255,0,0,255)))
+        if Util.DEBUG:
+            Util.LINES.append(Line((corners[0] + corners[1]) / 2, (corners[0] + corners[1]) / 2 + axes[0] * 15, (255,0,0,255)))
+            Util.LINES.append(Line((corners[1] + corners[2]) / 2, (corners[1] + corners[2]) / 2 + axes[1] * 15, (255,0,0,255)))
 
         return axes
 

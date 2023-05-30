@@ -14,11 +14,6 @@ class Solver:
                 raise Exception("Invalid solver setting")
 
     def step(self, sup, dt):
-       
-        # c'est de pire en pire va savoir pk tout pue la chiasse avec le dt je vais me pendre
-        # force = 10
-        # dt *= force
-
         for shape in sup.temp_render_list:
             if shape != sup.drag_object:
                 if not shape.is_static:

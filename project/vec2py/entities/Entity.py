@@ -18,6 +18,10 @@ class Entity:
 
         self.area = self.get_area()  # L'aire de l'entité
         self.mass = self.get_mass() if not is_static else float('inf')  # La masse de l'entité
+        self.inv_mass = 1 / self.mass
+
+        self.inertia = 0.7
+        self.inv_inertia = 1 / self.inertia if self.inertia > 0 else 0
 
         self.x_velocity = x_velocity if not is_static else 0
 
@@ -30,93 +34,11 @@ class Entity:
         self.external_forces = {}
         self._net_force = Vector2D(0, 0)
 
+        self.restitution = 0.9
+        self.static_friction = 0.6
+        self.dynamic_friction = 0.4
+
         Entity.instances.add(self)
-
-
-    @staticmethod
-    def agagag_collision_circle(a: Circ, b: Circ):
-        e = 0.8
-
-        va = a.get_velocity()
-        vb = b.get_velocity()
-
-        n = ((b.get_pos() - a.get_pos()) * b.radius) / (a.radius + b.radius)
-
-        vab = va - vb
-        vn = Vector2D.dot_product(vab, n)
-
-        ia = a.mass * a.radius ** 2
-        ib = b.mass * b.radius ** 2
-
-        angular_part = Vector2D.dot_product(Vector2D.cross_product_vec_angle(n, a.radius) * a.radius / ia + 
-                                            Vector2D.cross_product_vec_angle(n, b.radius) * b.radius / ib, n)
-
-        j = (-(1 + e) * vn) / (Vector2D.dot_product(n, n) * (1/a.mass + 1/b.mass) + angular_part)
-
-        vap = va + (j/a.mass) * n
-        vbp = vb - (j/b.mass) * n
-
-        a.set_velocity(vap)
-        b.set_velocity(vbp)
-        a.angular_velocity += Vector2D.cross_product_vec_angle(j*n, a.radius) / ia
-        b.angular_velocity += Vector2D.cross_product_vec_angle(j*n, b.radius) / ib
-
-    @staticmethod
-    def agagag_collision(sup, a: "Entity", b: "Entity"):
-        # https://www.myphysicslab.com/engine2D/collision-en.html#resting_contact
-        print(f'{a} collision {b}')
-
-        return
-        e = 0.8
-        P, perf_obj = Entity.get_col(a, b)
-
-        if P == None:
-            return
-
-        rap = P - a.get_pos()
-        rbp = P - b.get_pos()
-
-        ra = rap.get_norm()
-        rb = rbp.get_norm()
-
-        va = a.get_velocity()
-        vb = b.get_velocity()
-
-        n = perf_obj.get_perfored_vector(P).get_perpendicular_unit_vector()
-
-        vab = va - vb
-        vn = Vector2D.dot_product(vab, n)
-
-        if a.mass == float("inf"):
-            j = (-(1 + e) * vn) / ((1/b.mass) + Vector2D.dot_product(Vector2D.cross_product_vec_angle(n, rb) * rb / b.moment_of_inertia, n))
-            print('a inf')
-        elif b.mass == float("inf"):
-            j = (-(1 + e) * vn) / ((1/a.mass) + Vector2D.dot_product(Vector2D.cross_product_vec_angle(n, ra) * ra / a.moment_of_inertia, n))
-            print('b inf')
-        else:
-            j = (-(1 + e) * vn) / ((1/a.mass + 1/b.mass) + Vector2D.dot_product(Vector2D.cross_product_vec_angle(n, ra) * ra / a.moment_of_inertia + 
-                                                                                Vector2D.cross_product_vec_angle(n, rb) * rb / b.moment_of_inertia, n))
-
-        a.set_velocity(va + (j/a.mass) * n)
-        b.set_velocity(vb - (j/b.mass) * n)
-
-        jn = j*n
-        a.angular_velocity += Vector2D.cross_product_2D(jn, rap) / a.moment_of_inertia
-        b.angular_velocity += Vector2D.cross_product_2D(jn, rbp) / b.moment_of_inertia
-
-    # to do after this works ^^^ https://www.myphysicslab.com/engine2D/collision-methods-en.html
-
-    @staticmethod
-    def get_col(a, b):
-        for corner in a.get_corners():
-            if b.contains(corner):
-                return corner, b
-
-        for corner in b.get_corners():
-            if a.contains(corner):
-                return corner, a
-
-        return None, None
 
     def collision(self, other):
         # Calcul des vitesses de collision
@@ -178,6 +100,10 @@ class Entity:
         self.x_velocity = vector.get_x()
         self.y_velocity = vector.get_y()
 
+    def add_velocity(self, vector: Vector2D) -> None:
+        self.x_velocity += vector.get_x()
+        self.y_velocity += vector.get_y()
+
     def full_stop(self):
         self.internal_forces = {}
         self.external_forces = {}
@@ -200,6 +126,10 @@ class Entity:
         """
         return Vector2D(self.x, self.y)
 
+    def move(self, vector: Vector2D):
+        self.x += vector.get_x()
+        self.y += vector.get_y()
+
     def get_AABB(self) -> DoubleRect:
         raise Exception(f'{inspect.stack()[0][3]}() is not implemented for the class: {self.__class__} ')
 
@@ -213,12 +143,15 @@ class Entity:
         raise Exception(f'{inspect.stack()[0][3]}() is not implemented for the class: {self.__class__} ')
 
     class Projection:
-        def __init__(self, p_min, p_max):
-            self.p_min = p_min
-            self.p_max = p_max
+        def __init__(self, min: float, max: float):
+            self.min = min
+            self.max = max
 
-        def overlap(self, other):
-            return self.p_min < other.p_max and other.p_min < self.p_max
+        def overlap(self, other: "Entity.Projection"):
+            return self.min < other.max and other.min < self.max
 
-        def get_overlap(self, other):
-            return min(self.p_max, other.p_max) - max(self.p_min, other.p_min)
+        def get_overlap(self, other: "Entity.Projection"):
+            return min(self.max, other.max) - max(self.min, other.min)
+
+        def get_axis_depth(self, other: "Entity.Projection") -> float:
+            return min(other.max - self.min, self.max - other.min)
