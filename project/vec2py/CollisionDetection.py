@@ -215,7 +215,7 @@ class CollisionSAT:
 
         return True
 
-def fin_closest_point_on_polygon(circleCenter: Vector2D, vertices: list[Vector2D]):
+def find_closest_point_on_polygon(circleCenter: Vector2D, vertices: list[Vector2D]):
     result = -1;
     minDistance = float('inf')
 

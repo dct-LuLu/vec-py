@@ -13,7 +13,7 @@ class Solver:
             case _:
                 raise Exception("Invalid solver setting")
 
-    def simulate(self, sup, dt):
+    def step(self, sup, dt):
        
         # c'est de pire en pire va savoir pk tout pue la chiasse avec le dt je vais me pendre
         # force = 10
@@ -23,12 +23,12 @@ class Solver:
             if shape != sup.drag_object:
                 if not shape.is_static:
                     Walls.check(sup, shape)
-                    self.solver.simulate(shape, dt)
+                    self.solver.step(shape, dt)
 
 
 class SemiImplicitEuler:
     @staticmethod
-    def simulate(shape, dt):
+    def step(shape, dt):
         shape.internal_forces["G"] = Constants.GRAVITY
         shape.internal_forces["r"] = Vector2D(shape.x_velocity,
                                               shape.y_velocity) * -shape.air_resistance_coefficient * dt
@@ -47,7 +47,7 @@ class SemiImplicitEuler:
 
 class Verlet:
     @staticmethod
-    def simulate(shape, dt):
+    def step(shape, dt):
         # Calcul des forces internes
         shape.internal_forces["G"] = Constants.GRAVITY
         shape.internal_forces["r"] = Vector2D(shape.x_velocity,
@@ -70,56 +70,3 @@ class Verlet:
 
         # Mise à jour de la rotation
         shape.rotation += shape.angular_velocity * dt
-
-
-
-
-
-# RK-4 method python program
-
-# function to be solved
-def f(x,y):
-    return x+y
-
-# or
-# f = lambda x: x+y
-
-# RK-4 method
-def rk4(x0,y0,xn,n):
-    
-    # Calculating step size
-    h = (xn-x0)/n
-    
-    print('\n--------SOLUTION--------')
-    print('-------------------------')    
-    print('x0\ty0\tyn')
-    print('-------------------------')
-    for i in range(n):
-        k1 = h * (f(x0, y0))
-        k2 = h * (f((x0+h/2), (y0+k1/2)))
-        k3 = h * (f((x0+h/2), (y0+k2/2)))
-        k4 = h * (f((x0+h), (y0+k3)))
-        k = (k1+2*k2+2*k3+k4)/6
-        yn = y0 + k
-        print('%.4f\t%.4f\t%.4f'% (x0,y0,yn) )
-        print('-------------------------')
-        y0 = yn
-        x0 = x0+h
-    
-    print('\nAt x=%.4f, y=%.4f' %(xn,yn))
-
-
-if __name__ == "__main__":
-    # Inputs
-    print('Enter initial conditions:')
-    x0 = float(input('x0 = '))
-    y0 = float(input('y0 = '))
-
-    print('Enter calculation point: ')
-    xn = float(input('xn = '))
-
-    print('Enter number of steps:')
-    step = int(input('Number of steps = '))
-
-    # RK4 method call
-    rk4(x0, y0, xn, step)

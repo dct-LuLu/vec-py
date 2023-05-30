@@ -13,7 +13,7 @@ class Events:
         self.target = None  # Référence à l'objet selectionné pour les informations
 
     # FIRST HIT
-    def on_mouse_press(self, x, y, button, modifiers):
+    def on_mouse_press(self, x, y, button, modifiers=None):
         self.cursor_pos = Vector2D(x, y)
         if button in (mouse.LEFT, mouse.RIGHT):
             for _ in Entity.get_movables():
@@ -28,7 +28,7 @@ class Events:
                         self.cue_object = _
 
     # WHILE
-    def on_mouse_drag(self, x, y, dx, dy, buttons, modifiers):
+    def on_mouse_drag(self, x, y, dx, dy, buttons, modifiers=None):
         if (buttons & mouse.LEFT) and self.drag_object is not None:
             self.drag_object.full_stop()
             self.drag_object.x += dx
@@ -40,7 +40,7 @@ class Events:
             self.cursor_pos = Vector2D(x, y)
                 
     # AFTER
-    def on_mouse_release(self, x, y, button, modifiers):
+    def on_mouse_release(self, x, y, button, modifiers=None):
         if (button & mouse.LEFT) and self.drag_object is not None:
             avg_x = sum(map(lambda _: _.get_x(), self.last_speeds)) / len(self.last_speeds)
             avg_y = sum(map(lambda _: _.get_y(), self.last_speeds)) / len(self.last_speeds)
@@ -52,3 +52,8 @@ class Events:
         elif (button & mouse.RIGHT) and self.cue_object is not None:
             self.cue_object.internal_forces["Q"] = Vector2D(self.cue_object.x - x, self.cue_object.y - y) * 5
             self.cue_object = None
+
+
+    def on_key_press(symbol, modifiers=None):
+        pass
+        #if symbol == key.LCTRL or 
