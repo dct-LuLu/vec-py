@@ -64,6 +64,9 @@ class Entity:
     @staticmethod
     def agagag_collision(sup, a: "Entity", b: "Entity"):
         # https://www.myphysicslab.com/engine2D/collision-en.html#resting_contact
+        print(f'{a} collision {b}')
+
+        return
         e = 0.8
         P, perf_obj = Entity.get_col(a, b)
 
@@ -191,6 +194,12 @@ class Entity:
     def get_movables(cls):
         return [entity for entity in cls.instances if not entity.is_static]
 
+    def get_pos(self):
+        """
+        Returns the position of the circle as a Vector
+        """
+        return Vector2D(self.x, self.y)
+
     def get_AABB(self) -> DoubleRect:
         raise Exception(f'{inspect.stack()[0][3]}() is not implemented for the class: {self.__class__} ')
 
@@ -199,3 +208,17 @@ class Entity:
 
     def get_corners(self) -> tuple[Vector2D, Vector2D]:
         raise Exception(f'{inspect.stack()[0][3]}() is not implemented for the class: {self.__class__} ')
+
+    def project_shape_onto_axis(self, axis: Vector2D) -> "Projection":
+        raise Exception(f'{inspect.stack()[0][3]}() is not implemented for the class: {self.__class__} ')
+
+    class Projection:
+        def __init__(self, p_min, p_max):
+            self.p_min = p_min
+            self.p_max = p_max
+
+        def overlap(self, other):
+            return self.p_min < other.p_max and other.p_min < self.p_max
+
+        def get_overlap(self, other):
+            return min(self.p_max, other.p_max) - max(self.p_min, other.p_min)

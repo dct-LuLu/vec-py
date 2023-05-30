@@ -4,6 +4,7 @@ from math import isnan, isinf, pi, floor
 class Util:
     DEBUG = False
     ADVANCED = False
+    LINES = []
 
     @staticmethod
     def test_finite(value):

@@ -1,5 +1,5 @@
 from vec2py.entities.Entity import Entity
-from vec2py.util import DoubleRect, Vector2D, Util
+from vec2py.util import DoubleRect, Vector2D, Util, Line
 from math import pi, cos, sin, radians
 
 from pyglet import shapes
@@ -78,9 +78,6 @@ class Rect(Entity, shapes.Rectangle):
 
         return DoubleRect.make(self.aabb[0], self.aabb[1])
 
-    def get_pos(self):
-        return Vector2D(self.x, self.y)
-
     def contains(self, point: Vector2D):
         a, b, _, d = self.get_corners()
 
@@ -92,8 +89,30 @@ class Rect(Entity, shapes.Rectangle):
 
     def get_axes_SAT(self) -> list[Vector2D]:
         corners = self.get_corners()
-        return [(corners[1] - corners[0]).get_normal().normalize(),
+
+        axes = [(corners[1] - corners[0]).get_normal().normalize(),
                 (corners[2] - corners[1]).get_normal().normalize()]
+
+        Util.LINES.append(Line((corners[0] + corners[1]) / 2, (corners[0] + corners[1]) / 2 + axes[0] * 15, (255,0,0,255)))
+        Util.LINES.append(Line((corners[1] + corners[2]) / 2, (corners[1] + corners[2]) / 2 + axes[1] * 15, (255,0,0,255)))
+
+        return axes
+
+    def project_shape_onto_axis(self, axis: Vector2D) -> Entity.Projection:
+        vertices = self.get_corners()
+
+        p_min = Vector2D.dot_product(axis, vertices[0])
+        p_max = p_min
+
+        for vertices in vertices[1:]:
+            p = Vector2D.dot_product(axis, vertices)
+
+            if p < p_min:
+                p_min = p
+            elif p > p_max:
+                p_max = p
+
+        return Entity.Projection(p_min, p_max)
 
     def __str__(self):
         return f"Rect(x={self.x}, y={self.y}, width={self.width}, height={self.height}, rotation={self.rotation})"

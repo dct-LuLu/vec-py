@@ -1,5 +1,5 @@
-from vec2py.entities.Entity import Entity
-from vec2py.util import DoubleRect, Vector2D, Util
+from vec2py.entities.Entity import Entity, Circ
+from vec2py.util import DoubleRect, Vector2D, Util, Line
 from pyglet import shapes
 
 
@@ -199,54 +199,35 @@ class CollisionSAT:
 
     @staticmethod
     def collision_check_SAT(shape_a: Entity, shape_b: Entity):
-        axes_a = shape_a.get_axes_SAT()
-        axes_b = shape_b.get_axes_SAT()
+        axes = shape_a.get_axes_SAT() + shape_b.get_axes_SAT()
 
-        for axis in axes_a:
-            p1 = CollisionSAT.project_shape_onto_axis(shape_a, axis)
-            p2 = CollisionSAT.project_shape_onto_axis(shape_b, axis)
+        if type(shape_a) == Circ or type(shape_b) == Circ:
+            axes.append(Vector2D(shape_a.get_pos(), shape_b.get_pos()).normalize())
 
-            if not p1.overlap(p2):
-                return False
+        Util.LINES.append(Line(shape_a.get_pos(), shape_b.get_pos(), (255,0,0,255)))
 
-        for axis in axes_b:
-            p1 = CollisionSAT.project_shape_onto_axis(shape_a, axis)
-            p2 = CollisionSAT.project_shape_onto_axis(shape_b, axis)
+        for axis in axes:
+            p1 = shape_a.project_shape_onto_axis(axis)
+            p2 = shape_b.project_shape_onto_axis(axis)
 
             if not p1.overlap(p2):
                 return False
 
         return True
 
-    @staticmethod
-    def project_shape_onto_axis(shape: Entity, axis: Vector2D):
-        vertices = shape.get_corners()
+def fin_closest_point_on_polygon(circleCenter: Vector2D, vertices: list[Vector2D]):
+    result = -1;
+    minDistance = float('inf')
 
-        p_min = Vector2D.dot_product(axis, vertices[0])
-        p_max = p_min
+    for i in range(len(vertices)):
+        v = vertices[i]
+        distance = Vector2D.distance(v, circleCenter)
 
-        for vertices in vertices[1:]:
-            p = Vector2D.dot_product(axis, vertices)
+        if distance < minDistance:
+            minDistance = distance
+            result = i
 
-            if p < p_min:
-                p_min = p
-            elif p > p_max:
-                p_max = p
-
-        return Projection(p_min, p_max)
-
-
-class Projection:
-    def __init__(self, p_min, p_max):
-        self.p_min = p_min
-        self.p_max = p_max
-
-    def overlap(self, other):
-        return self.p_min < other.p_max and other.p_min < self.p_max
-
-    def get_overlap(self, other):
-        return min(self.p_max, other.p_max) - max(self.p_min, other.p_min)
-
+    return result
 
 class CollisionDetection:
     may_collide = set()

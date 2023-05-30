@@ -44,12 +44,6 @@ class Circ(Entity, shapes.Circle):
     def get_mass(self):
         return self.area * self.density
 
-    def get_pos(self):
-        """
-        Returns the position of the circle as a Vector
-        """
-        return Vector2D(self.x, self.y)
-
     def get_axes_SAT(self) -> list[Vector2D]:
         return []
 
@@ -69,6 +63,11 @@ class Circ(Entity, shapes.Circle):
         # ((point.getX()-self.x)**2 + (point.getY()-self.y)**2)
         return self._squared_radius >= Vector2D.distance_squared(point, self.get_pos())
 
+    def project_shape_onto_axis(self, axis: Vector2D) -> Entity.Projection:
+        min = Vector2D.dot_product(axis, self.get_pos() - axis * self.radius)
+        max = Vector2D.dot_product(axis, self.get_pos() + axis * self.radius)
+
+        return Entity.Projection(min, max)
 
 if __name__ == "__main__":
     c = Circ(5, 5, 5)

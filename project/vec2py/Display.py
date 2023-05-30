@@ -21,11 +21,11 @@ class Display(Events, pyglet.window.Window):
         self.solver = Solver()
         Events.__init__(self)
         # self.temp_render_list = [Circ(100, 100, 50, color=(98, 12, 225, 230)), Circ(250, 250, 13, color=(98, 12, 225, 230))]
-        walls = [Rect(self.window_width / 2, 0, self.window_width, 30, 0, (255, 122, 60, 255), True, False)]
-        self.temp_render_list = [Rect(400, 300, 150, 100, 15), Rect(150, 250, 100, 25, 30), Circ(100, 100, 50, None, 0, color=(98, 12, 225, 230))] + walls
+        # 
+        self.temp_render_list = [Rect(400, 300, 150, 100, 15), Rect(150, 250, 100, 25, 30), Circ(100, 100, 50, None, 0, color=(98, 12, 225, 230))]
 
-        pyglet.clock.schedule_interval(self.remake, 1 / 120.0)
-        pyglet.clock.schedule_interval(self.simulate, 1 / 120.0)
+        pyglet.clock.schedule_interval(self.remake, 1 / 30.0)
+        pyglet.clock.schedule_interval(self.simulate, 1 / 30.0)
         setting = "quadtree"
         setting = "SAT"
         self.collision_detection = CollisionDetection(self.window_width, self.window_height, setting)
@@ -76,6 +76,10 @@ class Display(Events, pyglet.window.Window):
         for i in self.temp_render_list:
             i.draw()
 
+        for i in Util.LINES:
+            i.draw()
+
+        Util.LINES = []
 
 if __name__ == "__main__":
     a = Display(800, 600)
